@@ -1,11 +1,58 @@
+import { useState } from 'react';
 import { MainLayout } from './components/layout';
+import { TaskCard, TaskModal, TaskForm } from './components/tasks';
+import { Button } from './components/common';
 import { useApp } from './context/AppContext';
+import { CreateTaskInput, UpdateTaskInput } from './types';
 
 function App() {
-  const { projects, tasks, activeProjectId } = useApp();
+  const {
+    projects,
+    tasks,
+    activeProjectId,
+    createTask,
+    updateTask,
+    deleteTask,
+  } = useApp();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<string | null>(null);
 
   const activeProject = projects.find((p) => p.id === activeProjectId);
-  const projectTasks = tasks.filter((t) => t.projectId === activeProjectId);
+  const projectTasks = tasks.filter(
+    (t) => t.projectId === activeProjectId && !t.isArchived
+  );
+
+  // Group tasks by status
+  const todoTasks = projectTasks.filter((t) => t.status === 'todo');
+  const inProgressTasks = projectTasks.filter((t) => t.status === 'inProgress');
+  const doneTasks = projectTasks.filter((t) => t.status === 'done');
+
+  // Handle create task
+  // Handle create task
+  const handleCreateTask = (data: CreateTaskInput | UpdateTaskInput) => {
+    if (activeProjectId) {
+      createTask(data as CreateTaskInput);
+      setIsModalOpen(false);
+    }
+  };
+
+  // Handle update task
+  const handleUpdateTask = (data: CreateTaskInput | UpdateTaskInput) => {
+    if (editingTask) {
+      updateTask(editingTask, data as UpdateTaskInput);
+      setEditingTask(null);
+    }
+  };
+  // Handle delete task
+  const handleDeleteTask = (taskId: string) => {
+    if (confirm('Are you sure you want to delete this task?')) {
+      deleteTask(taskId);
+    }
+  };
+
+  const taskToEdit = editingTask
+    ? tasks.find((t) => t.id === editingTask)
+    : undefined;
 
   return (
     <MainLayout>
@@ -13,24 +60,33 @@ function App() {
         {/* Project Header */}
         {activeProject && (
           <div className="mb-8">
-            <div className="flex items-center gap-4 mb-2">
-              <div
-                className="w-8 h-8 border-2 border-light-text-primary dark:border-dark-text-primary"
-                style={{ backgroundColor: activeProject.color }}
-              />
-              <h1 className="text-4xl font-display font-bold text-light-text-primary dark:text-dark-text-primary">
-                {activeProject.name}
-              </h1>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-4">
+                <div
+                  className="w-8 h-8 border-2 border-light-text-primary dark:border-dark-text-primary"
+                  style={{ backgroundColor: activeProject.color }}
+                />
+                <div>
+                  <h1 className="text-4xl font-display font-bold text-light-text-primary dark:text-dark-text-primary">
+                    {activeProject.name}
+                  </h1>
+                  {activeProject.description && (
+                    <p className="text-light-text-secondary dark:text-dark-text-secondary">
+                      {activeProject.description}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Create Task Button */}
+              <Button onClick={() => setIsModalOpen(true)} variant="primary">
+                + New Task
+              </Button>
             </div>
-            {activeProject.description && (
-              <p className="text-light-text-secondary dark:text-dark-text-secondary ml-12">
-                {activeProject.description}
-              </p>
-            )}
           </div>
         )}
 
-        {/* Task Count */}
+        {/* Task Stats */}
         <div className="mb-6 p-4 bg-light-surface dark:bg-dark-surface border-2 border-light-border dark:border-dark-border">
           <div className="flex items-center justify-between">
             <div>
@@ -46,7 +102,7 @@ function App() {
                 To Do
               </p>
               <p className="text-2xl font-display font-bold text-pastel-blue dark:text-muted-blue">
-                {projectTasks.filter((t) => t.status === 'todo').length}
+                {todoTasks.length}
               </p>
             </div>
             <div>
@@ -54,7 +110,7 @@ function App() {
                 In Progress
               </p>
               <p className="text-2xl font-display font-bold text-pastel-orange dark:text-muted-orange">
-                {projectTasks.filter((t) => t.status === 'inProgress').length}
+                {inProgressTasks.length}
               </p>
             </div>
             <div>
@@ -62,18 +118,110 @@ function App() {
                 Done
               </p>
               <p className="text-2xl font-display font-bold text-pastel-purple dark:text-muted-purple">
-                {projectTasks.filter((t) => t.status === 'done').length}
+                {doneTasks.length}
               </p>
             </div>
           </div>
         </div>
 
-        {/* Placeholder for Kanban Board */}
-        <div className="p-12 bg-light-surface dark:bg-dark-surface border-2 border-dashed border-light-border dark:border-dark-border text-center">
-          <p className="text-light-text-secondary dark:text-dark-text-secondary font-display">
-            Kanban Board Coming Soon! 🚀
-          </p>
+        {/* Simple Task List (Kanban Board Coming in Next Phase) */}
+        <div className="space-y-6">
+          {/* To Do */}
+          <div>
+            <h2 className="text-xl font-display font-bold mb-3 text-light-text-primary dark:text-dark-text-primary">
+              To Do ({todoTasks.length})
+            </h2>
+            <div className="space-y-3">
+              {todoTasks.map((task) => (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  onClick={() => setEditingTask(task.id)}
+                  onDelete={() => handleDeleteTask(task.id)}
+                />
+              ))}
+              {todoTasks.length === 0 && (
+                <p className="text-light-text-secondary dark:text-dark-text-secondary text-center py-8">
+                  No tasks to do
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* In Progress */}
+          <div>
+            <h2 className="text-xl font-display font-bold mb-3 text-light-text-primary dark:text-dark-text-primary">
+              In Progress ({inProgressTasks.length})
+            </h2>
+            <div className="space-y-3">
+              {inProgressTasks.map((task) => (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  onClick={() => setEditingTask(task.id)}
+                  onDelete={() => handleDeleteTask(task.id)}
+                />
+              ))}
+              {inProgressTasks.length === 0 && (
+                <p className="text-light-text-secondary dark:text-dark-text-secondary text-center py-8">
+                  No tasks in progress
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Done */}
+          <div>
+            <h2 className="text-xl font-display font-bold mb-3 text-light-text-primary dark:text-dark-text-primary">
+              Done ({doneTasks.length})
+            </h2>
+            <div className="space-y-3">
+              {doneTasks.map((task) => (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  onClick={() => setEditingTask(task.id)}
+                  onDelete={() => handleDeleteTask(task.id)}
+                />
+              ))}
+              {doneTasks.length === 0 && (
+                <p className="text-light-text-secondary dark:text-dark-text-secondary text-center py-8">
+                  No completed tasks
+                </p>
+              )}
+            </div>
+          </div>
         </div>
+
+        {/* Create Task Modal */}
+        <TaskModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          title="Create New Task"
+        >
+          <TaskForm
+            projectId={activeProjectId || ''}
+            onSubmit={handleCreateTask}
+            onCancel={() => setIsModalOpen(false)}
+          />
+        </TaskModal>
+
+        {/* Edit Task Modal */}
+        <TaskModal
+          isOpen={!!editingTask}
+          onClose={() => setEditingTask(null)}
+          title="Edit Task"
+        >
+          {taskToEdit && (
+            <TaskForm
+              task={taskToEdit}
+              projectId={taskToEdit.projectId}
+              onSubmit={handleUpdateTask}
+              onCancel={() => setEditingTask(null)}
+              isEditing
+            />
+          )}
+        </TaskModal>
       </div>
     </MainLayout>
   );
