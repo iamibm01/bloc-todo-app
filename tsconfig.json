@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    // ... existing options ...
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    // Enable strict mode for better type checking
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true
+  }
+}
