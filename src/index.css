@@ -20,22 +20,3 @@
     @apply font-display;
   }
 }
-
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  @apply bg-light-surface dark:bg-dark-surface;
-}
-
-::-webkit-scrollbar-thumb {
-  @apply bg-light-border dark:bg-dark-border;
-  @apply rounded-sm;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-gray-400 dark:bg-gray-600;
-}
