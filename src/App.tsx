@@ -1,123 +1,174 @@
+import { useState } from 'react';
 import { useTheme } from './context/ThemeContext';
 import { useApp } from './context/AppContext';
+import {
+  Button,
+  Input,
+  Textarea,
+  Select,
+  Tag,
+  SearchBar,
+} from './components/common';
+import type { SelectOption } from './components/common';
 
 function App() {
   const { theme, toggleTheme } = useTheme();
-  const { projects, tasks, createTask, createProject } = useApp();
+  const { projects, createProject, createTask } = useApp();
+  const [searchValue, setSearchValue] = useState('');
+  const [inputValue, setInputValue] = useState('');
 
-  // Test function to create a sample project
+  const priorityOptions: SelectOption[] = [
+    { value: 'high', label: 'High Priority' },
+    { value: 'medium', label: 'Medium Priority' },
+    { value: 'low', label: 'Low Priority' },
+  ];
+
   const handleCreateProject = () => {
     createProject({
-      name: 'My First Project',
-      description: 'Testing the context!',
+      name: 'Test Project',
+      description: 'Testing components!',
     });
   };
 
-  // Test function to create a sample task
-// Test function to create a sample task
-const handleCreateTask = () => {
-  const firstProject = projects[0];
-  if (firstProject) {
-    createTask({
-      title: 'My First Task',
-      description: 'Testing task creation!',
-      projectId: firstProject.id,
-      priority: 'high',
-    });
-  }
-};
+  const handleCreateTask = () => {
+    const firstProject = projects[0];
+    if (firstProject) {
+      createTask({
+        title: 'Test Task',
+        projectId: firstProject.id,
+        priority: 'high',
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-light-bg dark:bg-dark-bg p-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-display text-light-text-primary dark:text-dark-text-primary mb-4">
-          Bloc - Task Management
+      <div className="max-w-4xl mx-auto space-y-8">
+        <h1 className="text-4xl font-display text-light-text-primary dark:text-dark-text-primary">
+          Bloc - Component Library
         </h1>
-        
-        <p className="text-light-text-secondary dark:text-dark-text-secondary mb-8">
-          Current theme: <span className="font-mono">{theme}</span>
-        </p>
 
-        {/* Theme Toggle Button */}
-        <button
-          onClick={toggleTheme}
-          className="px-4 py-2 bg-pastel-pink dark:bg-muted-pink text-light-text-primary dark:text-dark-text-primary rounded border-2 border-light-text-primary dark:border-dark-text-primary mb-8 hover:scale-105 transition-transform"
-        >
-          Toggle Theme
-        </button>
-
-        {/* Test Buttons */}
-        <div className="space-x-4 mb-8">
-          <button
-            onClick={handleCreateProject}
-            className="px-4 py-2 bg-pastel-blue dark:bg-muted-blue text-light-text-primary dark:text-dark-text-primary rounded border-2 border-light-text-primary dark:border-dark-text-primary hover:scale-105 transition-transform"
-          >
-            Create Test Project
-          </button>
-          
-          <button
-            onClick={handleCreateTask}
-            className="px-4 py-2 bg-pastel-green dark:bg-muted-green text-light-text-primary dark:text-dark-text-primary rounded border-2 border-light-text-primary dark:border-dark-text-primary hover:scale-105 transition-transform"
-          >
-            Create Test Task
-          </button>
+        {/* Theme Toggle */}
+        <div className="p-6 bg-light-surface dark:bg-dark-surface border-2 border-light-border dark:border-dark-border">
+          <h2 className="text-2xl font-display mb-4 text-light-text-primary dark:text-dark-text-primary">
+            Theme: {theme}
+          </h2>
+          <Button onClick={toggleTheme}>Toggle Theme</Button>
         </div>
 
-        {/* Display Projects */}
-        <div className="mb-8">
+        {/* Buttons */}
+        <div className="p-6 bg-light-surface dark:bg-dark-surface border-2 border-light-border dark:border-dark-border space-y-4">
           <h2 className="text-2xl font-display mb-4 text-light-text-primary dark:text-dark-text-primary">
-            Projects ({projects.length})
+            Buttons
           </h2>
-          <div className="space-y-2">
-            {projects.map((project) => (
-              <div
-                key={project.id}
-                className="p-4 bg-light-surface dark:bg-dark-surface border-2 border-light-border dark:border-dark-border rounded"
-                style={{ borderLeftColor: project.color, borderLeftWidth: '4px' }}
-              >
-                <h3 className="font-display text-light-text-primary dark:text-dark-text-primary">
-                  {project.name}
-                </h3>
-                {project.description && (
-                  <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
-                    {project.description}
-                  </p>
-                )}
-              </div>
-            ))}
+          <div className="flex flex-wrap gap-4">
+            <Button variant="primary" onClick={handleCreateProject}>
+              Create Project
+            </Button>
+            <Button variant="secondary" onClick={handleCreateTask}>
+              Create Task
+            </Button>
+            <Button variant="danger">Danger Button</Button>
+            <Button variant="ghost">Ghost Button</Button>
+          </div>
+          <div className="flex flex-wrap gap-4">
+            <Button size="sm">Small</Button>
+            <Button size="md">Medium</Button>
+            <Button size="lg">Large</Button>
+          </div>
+          <div className="flex flex-wrap gap-4">
+            <Button disabled>Disabled</Button>
+            <Button isLoading>Loading</Button>
           </div>
         </div>
 
-        {/* Display Tasks */}
-        <div>
+        {/* Inputs */}
+        <div className="p-6 bg-light-surface dark:bg-dark-surface border-2 border-light-border dark:border-dark-border space-y-4">
           <h2 className="text-2xl font-display mb-4 text-light-text-primary dark:text-dark-text-primary">
-            Tasks ({tasks.length})
+            Inputs
           </h2>
-          <div className="space-y-2">
-            {tasks.map((task) => (
-              <div
-                key={task.id}
-                className="p-4 bg-light-surface dark:bg-dark-surface border-2 border-light-border dark:border-dark-border rounded"
-              >
-                <h3 className="font-display text-light-text-primary dark:text-dark-text-primary">
-                  {task.title}
-                </h3>
-                {task.description && (
-                  <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
-                    {task.description}
-                  </p>
-                )}
-                <div className="flex gap-2 mt-2">
-                  <span className="text-xs px-2 py-1 rounded bg-pastel-red dark:bg-muted-red">
-                    {task.priority}
-                  </span>
-                  <span className="text-xs px-2 py-1 rounded bg-pastel-blue dark:bg-muted-blue">
-                    {task.status}
-                  </span>
-                </div>
-              </div>
-            ))}
+          <Input
+            label="Task Title"
+            placeholder="Enter task title..."
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            helperText="This is a helper text"
+          />
+          <Input
+            label="Required Field"
+            placeholder="This field is required"
+            required
+          />
+          <Input
+            label="Error State"
+            placeholder="This has an error"
+            error="This field is required"
+          />
+          <Textarea
+            label="Description"
+            placeholder="Enter description..."
+            helperText="Describe your task in detail"
+          />
+        </div>
+
+        {/* Select */}
+        <div className="p-6 bg-light-surface dark:bg-dark-surface border-2 border-light-border dark:border-dark-border space-y-4">
+          <h2 className="text-2xl font-display mb-4 text-light-text-primary dark:text-dark-text-primary">
+            Select
+          </h2>
+          <Select
+            label="Priority"
+            options={priorityOptions}
+            helperText="Choose task priority"
+          />
+        </div>
+
+        {/* Tags */}
+        <div className="p-6 bg-light-surface dark:bg-dark-surface border-2 border-light-border dark:border-dark-border space-y-4">
+          <h2 className="text-2xl font-display mb-4 text-light-text-primary dark:text-dark-text-primary">
+            Tags
+          </h2>
+          <div className="flex flex-wrap gap-2">
+            <Tag variant="priority" priority="high">
+              High Priority
+            </Tag>
+            <Tag variant="priority" priority="medium">
+              Medium Priority
+            </Tag>
+            <Tag variant="priority" priority="low">
+              Low Priority
+            </Tag>
           </div>
+          <div className="flex flex-wrap gap-2">
+            <Tag variant="status" status="todo">
+              To Do
+            </Tag>
+            <Tag variant="status" status="inProgress">
+              In Progress
+            </Tag>
+            <Tag variant="status" status="done">
+              Done
+            </Tag>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Tag color="#FFB3BA" onRemove={() => alert('Remove!')}>
+              Removable Tag
+            </Tag>
+            <Tag color="#BAFFC9">Custom Color</Tag>
+          </div>
+        </div>
+
+        {/* Search Bar */}
+        <div className="p-6 bg-light-surface dark:bg-dark-surface border-2 border-light-border dark:border-dark-border space-y-4">
+          <h2 className="text-2xl font-display mb-4 text-light-text-primary dark:text-dark-text-primary">
+            Search Bar
+          </h2>
+          <SearchBar
+            placeholder="Search tasks..."
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+            onClear={() => setSearchValue('')}
+          />
         </div>
       </div>
     </div>

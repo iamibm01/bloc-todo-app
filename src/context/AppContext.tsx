@@ -90,7 +90,7 @@ export function AppProvider({ children }: AppProviderProps) {
   const [tasks, setTasks] = useState<Task[]>(() => getTasks());
   const [projects, setProjects] = useState<Project[]>(() => {
     const savedProjects = getProjects();
-    
+
     // If no projects exist, create default inbox
     if (savedProjects.length === 0) {
       const defaultProject: Project = {
@@ -101,7 +101,7 @@ export function AppProvider({ children }: AppProviderProps) {
       saveProjects([defaultProject]);
       return [defaultProject];
     }
-    
+
     return savedProjects;
   });
 
@@ -139,26 +139,29 @@ export function AppProvider({ children }: AppProviderProps) {
   // TASK ACTIONS
   // ==========================================
 
-  const createTask = useCallback((input: CreateTaskInput): Task => {
-    const now = new Date();
-    const newTask: Task = {
-      id: uuidv4(),
-      title: input.title,
-      description: input.description,
-      projectId: input.projectId,
-      status: 'todo',
-      priority: input.priority || 'medium',
-      tags: input.tags || [],
-      dueDate: input.dueDate,
-      createdAt: now,
-      updatedAt: now,
-      order: tasks.length, // Add to end
-      isArchived: false,
-    };
+  const createTask = useCallback(
+    (input: CreateTaskInput): Task => {
+      const now = new Date();
+      const newTask: Task = {
+        id: uuidv4(),
+        title: input.title,
+        description: input.description,
+        projectId: input.projectId,
+        status: 'todo',
+        priority: input.priority || 'medium',
+        tags: input.tags || [],
+        dueDate: input.dueDate,
+        createdAt: now,
+        updatedAt: now,
+        order: tasks.length, // Add to end
+        isArchived: false,
+      };
 
-    setTasks((prev) => [...prev, newTask]);
-    return newTask;
-  }, [tasks.length]);
+      setTasks((prev) => [...prev, newTask]);
+      return newTask;
+    },
+    [tasks.length]
+  );
 
   const updateTask = useCallback((id: string, input: UpdateTaskInput) => {
     setTasks((prev) =>
@@ -226,10 +229,13 @@ export function AppProvider({ children }: AppProviderProps) {
 
   const createProject = useCallback((input: CreateProjectInput): Project => {
     const now = new Date();
-    
+
     // Get color from input or random from palette
-    const projectColor = input.color ?? PROJECT_COLORS[Math.floor(Math.random() * PROJECT_COLORS.length)] ?? '#FFD5E5';
-    
+    const projectColor =
+      input.color ??
+      PROJECT_COLORS[Math.floor(Math.random() * PROJECT_COLORS.length)] ??
+      '#FFD5E5';
+
     const newProject: Project = {
       id: uuidv4(),
       name: input.name,
@@ -254,27 +260,30 @@ export function AppProvider({ children }: AppProviderProps) {
     );
   }, []);
 
-  const deleteProject = useCallback((id: string) => {
-    // Don't allow deleting the default inbox
-    if (id === DEFAULT_PROJECT.id) return;
+  const deleteProject = useCallback(
+    (id: string) => {
+      // Don't allow deleting the default inbox
+      if (id === DEFAULT_PROJECT.id) return;
 
-    // Move all tasks from this project to inbox
-    setTasks((prev) =>
-      prev.map((task) =>
-        task.projectId === id
-          ? { ...task, projectId: DEFAULT_PROJECT.id, updatedAt: new Date() }
-          : task
-      )
-    );
+      // Move all tasks from this project to inbox
+      setTasks((prev) =>
+        prev.map((task) =>
+          task.projectId === id
+            ? { ...task, projectId: DEFAULT_PROJECT.id, updatedAt: new Date() }
+            : task
+        )
+      );
 
-    // Delete the project
-    setProjects((prev) => prev.filter((project) => project.id !== id));
+      // Delete the project
+      setProjects((prev) => prev.filter((project) => project.id !== id));
 
-    // If this was the active project, switch to inbox
-    if (activeProjectId === id) {
-      setActiveProjectId(DEFAULT_PROJECT.id);
-    }
-  }, [activeProjectId]);
+      // If this was the active project, switch to inbox
+      if (activeProjectId === id) {
+        setActiveProjectId(DEFAULT_PROJECT.id);
+      }
+    },
+    [activeProjectId]
+  );
 
   const setActiveProject = useCallback((id: string | null) => {
     setActiveProjectId(id);
