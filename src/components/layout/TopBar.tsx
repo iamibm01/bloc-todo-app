@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
-import { SearchBar} from '@/components/common';
+import { SearchBar, FilterPanel } from '@/components/common';
 
 // ==========================================
 // TOPBAR COMPONENT
@@ -9,7 +9,19 @@ import { SearchBar} from '@/components/common';
 
 export function TopBar() {
   const { theme, toggleTheme } = useTheme();
-  const { searchQuery, setSearchQuery, viewMode, setViewMode } = useApp();
+  const {
+    searchQuery,
+    setSearchQuery,
+    viewMode,
+    setViewMode,
+    filters,
+    setFilters,
+    clearFilters,
+    tasks,
+  } = useApp();
+
+  // Get all unique tags from tasks
+  const allTags = Array.from(new Set(tasks.flatMap((task) => task.tags)));
 
   return (
     <header className="sticky top-0 z-50 bg-light-surface dark:bg-dark-surface border-b-3 border-light-text-primary dark:border-dark-text-primary">
@@ -31,8 +43,16 @@ export function TopBar() {
           />
         </div>
 
-        {/* Right: View Toggle + Theme Toggle */}
+        {/* Right: Filter + View Toggle + Theme Toggle */}
         <div className="flex items-center gap-2">
+          {/* Filter Panel */}
+          <FilterPanel
+            filters={filters}
+            availableTags={allTags}
+            onFiltersChange={setFilters}
+            onClearFilters={clearFilters}
+          />
+
           {/* View Mode Toggle */}
           <div className="flex border-2 border-light-text-primary dark:border-dark-text-primary">
             <button

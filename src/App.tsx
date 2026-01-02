@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { MainLayout } from './components/layout';
 import { KanbanBoard } from './components/board';
 import { TaskModal, TaskForm } from './components/tasks';
-import { Button } from './components/common';
+import { Button, ActiveFilters } from './components/common';
 import { useApp } from './context/AppContext';
 import { CreateTaskInput, UpdateTaskInput, TaskStatus } from './types';
+import { applyFilters, filterBySearch } from './utils/filtering';
 
 function App() {
   const {
@@ -12,22 +13,39 @@ function App() {
     tasks,
     activeProjectId,
     viewMode,
+    searchQuery,
+    filters,
+    setFilters,
     createTask,
     updateTask,
     deleteTask,
     reorderTasks,
   } = useApp();
-  
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<string | null>(null);
 
   const activeProject = projects.find((p) => p.id === activeProjectId);
-  const projectTasks = tasks.filter((t) => t.projectId === activeProjectId && !t.isArchived);
+
+  // Filter and search tasks
+  const filteredTasks = useMemo(() => {
+    let result = tasks.filter((t) => t.projectId === activeProjectId && !t.isArchived);
+
+    // Apply search
+    if (searchQuery) {
+      result = filterBySearch(result, searchQuery);
+    }
+
+    // Apply filters
+    result = applyFilters(result, filters);
+
+    return result;
+  }, [tasks, activeProjectId, searchQuery, filters]);
 
   // Group tasks by status for stats
-  const todoTasks = projectTasks.filter((t) => t.status === 'todo');
-  const inProgressTasks = projectTasks.filter((t) => t.status === 'inProgress');
-  const doneTasks = projectTasks.filter((t) => t.status === 'done');
+  const todoTasks = filteredTasks.filter((t) => t.status === 'todo');
+  const inProgressTasks = filteredTasks.filter((t) => t.status === 'inProgress');
+  const doneTasks = filteredTasks.filter((t) => t.status === 'done');
 
   // Handle create task
   const handleCreateTask = (data: CreateTaskInput | UpdateTaskInput) => {
@@ -55,6 +73,20 @@ function App() {
     if (confirm('Are you sure you want to delete this task?')) {
       deleteTask(taskId);
     }
+  };
+
+  // Remove individual filters
+  const handleRemovePriority = () => {
+    setFilters({ ...filters, priority: undefined });
+  };
+
+  const handleRemoveTag = (tag: string) => {
+    const newTags = filters.tags?.filter((t) => t !== tag);
+    setFilters({ ...filters, tags: newTags?.length ? newTags : undefined });
+  };
+
+  const handleRemoveDateRange = () => {
+    setFilters({ ...filters, dateRange: undefined });
   };
 
   const taskToEdit = editingTask ? tasks.find((t) => t.id === editingTask) : undefined;
@@ -91,15 +123,25 @@ function App() {
           </div>
         )}
 
+        {/* Active Filters Display */}
+        <ActiveFilters
+          filters={filters}
+          onRemovePriority={handleRemovePriority}
+          onRemoveTag={handleRemoveTag}
+          onRemoveDateRange={handleRemoveDateRange}
+        />
+
         {/* Task Stats */}
         <div className="mb-6 p-4 bg-light-surface dark:bg-dark-surface border-2 border-light-border dark:border-dark-border">
           <div className="grid grid-cols-4 gap-4">
             <div>
               <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary mb-1">
-                Total Tasks
+                {searchQuery || filters.priority || filters.tags?.length || filters.dateRange
+                  ? 'Filtered Tasks'
+                  : 'Total Tasks'}
               </p>
               <p className="text-3xl font-display font-bold text-light-text-primary dark:text-dark-text-primary">
-                {projectTasks.length}
+                {filteredTasks.length}
               </p>
             </div>
             <div>
@@ -132,7 +174,7 @@ function App() {
         {/* Kanban Board or List View */}
         {viewMode === 'kanban' ? (
           <KanbanBoard
-            tasks={projectTasks}
+            tasks={filteredTasks}
             onTaskClick={setEditingTask}
             onTaskDelete={handleDeleteTask}
             onTaskMove={handleTaskMove}
