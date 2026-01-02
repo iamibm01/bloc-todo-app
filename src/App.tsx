@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { MainLayout } from './components/layout';
-import { KanbanBoard } from './components/board';
+import { KanbanBoard, ListView } from './components/board';
 import { TaskModal, TaskForm } from './components/tasks';
 import { Button, ActiveFilters } from './components/common';
 import { useApp } from './context/AppContext';
@@ -181,14 +181,12 @@ function App() {
             onTaskReorder={reorderTasks}
           />
         ) : (
-          <div className="p-12 bg-light-surface dark:bg-dark-surface border-2 border-dashed border-light-border dark:border-dark-border text-center">
-            <p className="text-light-text-secondary dark:text-dark-text-secondary font-display text-xl">
-              List View Coming Soon! 📋
-            </p>
-            <p className="text-light-text-secondary dark:text-dark-text-secondary mt-2">
-              Switch to Kanban view to see your tasks
-            </p>
-          </div>
+          <ListView
+            tasks={filteredTasks}
+            onTaskClick={setEditingTask}
+            onTaskDelete={handleDeleteTask}
+            onStatusChange={handleTaskMove}
+          />
         )}
 
         {/* Create Task Modal */}
