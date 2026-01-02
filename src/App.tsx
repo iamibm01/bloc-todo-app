@@ -1,11 +1,12 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { MainLayout } from './components/layout';
 import { KanbanBoard, ListView } from './components/board';
 import { TaskModal, TaskForm } from './components/tasks';
-import { Button, ActiveFilters } from './components/common';
+import { Button, ActiveFilters, KeyboardShortcutsModal } from './components/common';
 import { useApp } from './context/AppContext';
 import { CreateTaskInput, UpdateTaskInput, TaskStatus } from './types';
 import { applyFilters, filterBySearch } from './utils/filtering';
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 
 function App() {
   const {
@@ -15,6 +16,8 @@ function App() {
     viewMode,
     searchQuery,
     filters,
+    setViewMode,
+    setSearchQuery,
     setFilters,
     createTask,
     updateTask,
@@ -24,6 +27,8 @@ function App() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<string | null>(null);
+  const [showShortcuts, setShowShortcuts] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const activeProject = projects.find((p) => p.id === activeProjectId);
 
@@ -31,23 +36,85 @@ function App() {
   const filteredTasks = useMemo(() => {
     let result = tasks.filter((t) => t.projectId === activeProjectId && !t.isArchived);
 
-    // Apply search
     if (searchQuery) {
       result = filterBySearch(result, searchQuery);
     }
 
-    // Apply filters
     result = applyFilters(result, filters);
 
     return result;
   }, [tasks, activeProjectId, searchQuery, filters]);
 
-  // Group tasks by status for stats
   const todoTasks = filteredTasks.filter((t) => t.status === 'todo');
   const inProgressTasks = filteredTasks.filter((t) => t.status === 'inProgress');
   const doneTasks = filteredTasks.filter((t) => t.status === 'done');
 
-  // Handle create task
+  // Keyboard shortcuts
+  useKeyboardShortcuts(
+    [
+      {
+        key: 'n',
+        callback: () => setIsModalOpen(true),
+        description: 'Create new task',
+      },
+      {
+        key: '/',
+        callback: () => searchInputRef.current?.focus(),
+        description: 'Focus search',
+      },
+      {
+        key: 'Escape',
+        callback: () => {
+          if (isModalOpen || editingTask) {
+            setIsModalOpen(false);
+            setEditingTask(null);
+          } else if (searchQuery) {
+            setSearchQuery('');
+          } else if (showShortcuts) {
+            setShowShortcuts(false);
+          }
+        },
+        description: 'Close modal / Clear search',
+      },
+      {
+        key: 'k',
+        callback: () => setViewMode('kanban'),
+        description: 'Switch to Kanban view',
+      },
+      {
+        key: 'l',
+        callback: () => setViewMode('list'),
+        description: 'Switch to List view',
+      },
+      {
+        key: '?',
+        callback: () => setShowShortcuts(true),
+        description: 'Show keyboard shortcuts',
+      },
+      {
+        key: '1',
+        callback: () => setFilters({ ...filters, priority: 'high' }),
+        description: 'Filter by High priority',
+      },
+      {
+        key: '2',
+        callback: () => setFilters({ ...filters, priority: 'medium' }),
+        description: 'Filter by Medium priority',
+      },
+      {
+        key: '3',
+        callback: () => setFilters({ ...filters, priority: 'low' }),
+        description: 'Filter by Low priority',
+      },
+      {
+        key: '0',
+        callback: () => setFilters({ ...filters, priority: undefined }),
+        description: 'Clear priority filter',
+      },
+    ],
+    !isModalOpen && !editingTask && !showShortcuts
+  );
+
   const handleCreateTask = (data: CreateTaskInput | UpdateTaskInput) => {
     if (activeProjectId) {
       createTask(data as CreateTaskInput);
@@ -55,7 +122,6 @@ function App() {
     }
   };
 
-  // Handle update task
   const handleUpdateTask = (data: CreateTaskInput | UpdateTaskInput) => {
     if (editingTask) {
       updateTask(editingTask, data as UpdateTaskInput);
@@ -63,19 +129,16 @@ function App() {
     }
   };
 
-  // Handle task move (status change)
   const handleTaskMove = (taskId: string, newStatus: TaskStatus) => {
     updateTask(taskId, { status: newStatus });
   };
 
-  // Handle delete task
   const handleDeleteTask = (taskId: string) => {
     if (confirm('Are you sure you want to delete this task?')) {
       deleteTask(taskId);
     }
   };
 
-  // Remove individual filters
   const handleRemovePriority = () => {
     setFilters({ ...filters, priority: undefined });
   };
@@ -92,7 +155,7 @@ function App() {
   const taskToEdit = editingTask ? tasks.find((t) => t.id === editingTask) : undefined;
 
   return (
-    <MainLayout>
+    <MainLayout searchInputRef={searchInputRef}>
       <div className="max-w-7xl mx-auto">
         {/* Project Header */}
         {activeProject && (
@@ -115,10 +178,22 @@ function App() {
                 </div>
               </div>
 
-              {/* Create Task Button */}
-              <Button onClick={() => setIsModalOpen(true)} variant="primary" size="lg">
-                + New Task
-              </Button>
+              <div className="flex items-center gap-2">
+                {/* Create Task Button */}
+                <Button onClick={() => setIsModalOpen(true)} variant="primary" size="lg">
+                  + New Task
+                </Button>
+
+                {/* Keyboard Shortcuts Button */}
+                <Button
+                  onClick={() => setShowShortcuts(true)}
+                  variant="ghost"
+                  size="lg"
+                  title="Keyboard shortcuts (Press ?)"
+                >
+                  ⌨️
+                </Button>
+              </div>
             </div>
           </div>
         )}
@@ -218,6 +293,12 @@ function App() {
             />
           )}
         </TaskModal>
+
+        {/* Keyboard Shortcuts Modal */}
+        <KeyboardShortcutsModal
+          isOpen={showShortcuts}
+          onClose={() => setShowShortcuts(false)}
+        />
       </div>
     </MainLayout>
   );

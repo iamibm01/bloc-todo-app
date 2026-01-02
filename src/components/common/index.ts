@@ -7,3 +7,4 @@ export { Tag } from './Tag';
 export { SearchBar } from './SearchBar';
 export { FilterPanel } from './FilterPanel';
 export { ActiveFilters } from './ActiveFilters';
+export { KeyboardShortcutsModal } from './KeyboardShortcutsModal';

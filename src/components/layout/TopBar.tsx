@@ -1,3 +1,4 @@
+import { RefObject } from 'react';
 import { motion } from 'framer-motion';
 import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
@@ -7,7 +8,12 @@ import { SearchBar, FilterPanel } from '@/components/common';
 // TOPBAR COMPONENT
 // ==========================================
 
-export function TopBar() {
+interface TopBarProps {
+  onSearchFocus?: () => void;
+  searchInputRef?: RefObject<HTMLInputElement | null>;
+}
+
+export function TopBar({ searchInputRef }: TopBarProps) {
   const { theme, toggleTheme } = useTheme();
   const {
     searchQuery,
@@ -36,7 +42,8 @@ export function TopBar() {
         {/* Center: Search Bar */}
         <div className="flex-1 max-w-md">
           <SearchBar
-            placeholder="Search tasks..."
+            ref={searchInputRef}
+            placeholder="Search tasks... (Press / to focus)"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onClear={() => setSearchQuery('')}
@@ -94,7 +101,6 @@ export function TopBar() {
             aria-label="Toggle theme"
           >
             {theme === 'light' ? (
-              // Moon icon for dark mode
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-5 w-5 text-light-text-primary dark:text-dark-text-primary"
@@ -110,7 +116,6 @@ export function TopBar() {
                 />
               </svg>
             ) : (
-              // Sun icon for light mode
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-5 w-5 text-light-text-primary dark:text-dark-text-primary"
