@@ -29,6 +29,12 @@ export function Sidebar() {
     }
   };
 
+  const handleArchiveClick = () => {
+    // Set a special "archive" view
+    setActiveProject(null);
+    window.dispatchEvent(new CustomEvent('navigate-archive'));
+  };
+
   return (
     <motion.aside
       className="h-full bg-light-surface dark:bg-dark-surface border-r-3 border-light-text-primary dark:border-dark-text-primary flex flex-col"
@@ -78,7 +84,11 @@ export function Sidebar() {
               {projects.map((project) => (
                 <motion.button
                   key={project.id}
-                  onClick={() => setActiveProject(project.id)}
+                  onClick={() => {
+                    setActiveProject(project.id);
+                    // Clear archive view if it was active
+                    window.dispatchEvent(new CustomEvent('navigate-project'));
+                  }}
                   className={`
                     w-full px-3 py-2 text-left
                     border-2 transition-all duration-200
@@ -92,7 +102,6 @@ export function Sidebar() {
                   whileTap={{ scale: 0.98 }}
                 >
                   <div className="flex items-center gap-2">
-                    {/* Color indicator */}
                     <div
                       className="w-3 h-3 border border-light-text-primary dark:border-dark-text-primary flex-shrink-0"
                       style={{ backgroundColor: project.color }}
@@ -161,6 +170,17 @@ export function Sidebar() {
                   <span className="text-sm font-display font-semibold">New Project</span>
                 </button>
               )}
+
+              {/* Archive Button */}
+              <div className="mt-4 pt-4 border-t-2 border-light-border dark:border-dark-border">
+                <button
+                  onClick={handleArchiveClick}
+                  className="w-full px-3 py-2 border-2 border-light-border dark:border-dark-border hover:border-light-text-primary dark:hover:border-dark-text-primary text-light-text-secondary dark:text-dark-text-secondary hover:text-light-text-primary dark:hover:text-dark-text-primary transition-all flex items-center gap-2"
+                >
+                  <span className="text-lg">📦</span>
+                  <span className="text-sm font-display font-semibold">Archive</span>
+                </button>
+              </div>
             </motion.div>
           )}
 
@@ -195,6 +215,17 @@ export function Sidebar() {
                   />
                 </motion.button>
               ))}
+
+              {/* Archive Button Collapsed */}
+              <div className="pt-4 border-t-2 border-light-border dark:border-dark-border">
+                <button
+                  onClick={handleArchiveClick}
+                  className="w-full h-10 flex items-center justify-center border-2 border-light-border dark:border-dark-border hover:border-light-text-primary dark:hover:border-dark-text-primary transition-all"
+                  title="Archive"
+                >
+                  <span className="text-lg">📦</span>
+                </button>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>

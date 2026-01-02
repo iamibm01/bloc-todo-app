@@ -1,6 +1,7 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { MainLayout } from './components/layout';
 import { KanbanBoard, ListView } from './components/board';
+import { ArchiveView } from './components/views';
 import { TaskModal, TaskForm } from './components/tasks';
 import { Button, ActiveFilters, KeyboardShortcutsModal } from './components/common';
 import { useApp } from './context/AppContext';
@@ -19,6 +20,7 @@ function App() {
     setViewMode,
     setSearchQuery,
     setFilters,
+    setActiveProject,
     createTask,
     updateTask,
     deleteTask,
@@ -28,7 +30,22 @@ function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<string | null>(null);
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [showArchive, setShowArchive] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Listen for archive navigation events from sidebar
+  useEffect(() => {
+    const handleArchiveNav = () => setShowArchive(true);
+    const handleProjectNav = () => setShowArchive(false);
+
+    window.addEventListener('navigate-archive', handleArchiveNav);
+    window.addEventListener('navigate-project', handleProjectNav);
+
+    return () => {
+      window.removeEventListener('navigate-archive', handleArchiveNav);
+      window.removeEventListener('navigate-project', handleProjectNav);
+    };
+  }, []);
 
   const activeProject = projects.find((p) => p.id === activeProjectId);
 
@@ -54,7 +71,7 @@ function App() {
     [
       {
         key: 'n',
-        callback: () => setIsModalOpen(true),
+        callback: () => !showArchive && setIsModalOpen(true),
         description: 'Create new task',
       },
       {
@@ -72,19 +89,30 @@ function App() {
             setSearchQuery('');
           } else if (showShortcuts) {
             setShowShortcuts(false);
+          } else if (showArchive) {
+            setShowArchive(false);
+            if (projects[0]) setActiveProject(projects[0].id);
           }
         },
         description: 'Close modal / Clear search',
       },
       {
         key: 'k',
-        callback: () => setViewMode('kanban'),
+        callback: () => !showArchive && setViewMode('kanban'),
         description: 'Switch to Kanban view',
       },
       {
         key: 'l',
-        callback: () => setViewMode('list'),
+        callback: () => !showArchive && setViewMode('list'),
         description: 'Switch to List view',
+      },
+      {
+        key: 'a',
+        callback: () => {
+          setShowArchive(!showArchive);
+          if (!showArchive) setActiveProject(null);
+        },
+        description: 'Toggle archive view',
       },
       {
         key: '?',
@@ -93,22 +121,22 @@ function App() {
       },
       {
         key: '1',
-        callback: () => setFilters({ ...filters, priority: 'high' }),
+        callback: () => !showArchive && setFilters({ ...filters, priority: 'high' }),
         description: 'Filter by High priority',
       },
       {
         key: '2',
-        callback: () => setFilters({ ...filters, priority: 'medium' }),
+        callback: () => !showArchive && setFilters({ ...filters, priority: 'medium' }),
         description: 'Filter by Medium priority',
       },
       {
         key: '3',
-        callback: () => setFilters({ ...filters, priority: 'low' }),
+        callback: () => !showArchive && setFilters({ ...filters, priority: 'low' }),
         description: 'Filter by Low priority',
       },
       {
         key: '0',
-        callback: () => setFilters({ ...filters, priority: undefined }),
+        callback: () => !showArchive && setFilters({ ...filters, priority: undefined }),
         description: 'Clear priority filter',
       },
     ],
@@ -154,6 +182,16 @@ function App() {
 
   const taskToEdit = editingTask ? tasks.find((t) => t.id === editingTask) : undefined;
 
+  // Render archive view
+  if (showArchive) {
+    return (
+      <MainLayout searchInputRef={searchInputRef}>
+        <ArchiveView />
+      </MainLayout>
+    );
+  }
+
+  // Render normal project view
   return (
     <MainLayout searchInputRef={searchInputRef}>
       <div className="max-w-7xl mx-auto">
@@ -179,12 +217,9 @@ function App() {
               </div>
 
               <div className="flex items-center gap-2">
-                {/* Create Task Button */}
                 <Button onClick={() => setIsModalOpen(true)} variant="primary" size="lg">
                   + New Task
                 </Button>
-
-                {/* Keyboard Shortcuts Button */}
                 <Button
                   onClick={() => setShowShortcuts(true)}
                   variant="ghost"
@@ -198,7 +233,6 @@ function App() {
           </div>
         )}
 
-        {/* Active Filters Display */}
         <ActiveFilters
           filters={filters}
           onRemovePriority={handleRemovePriority}
@@ -206,7 +240,6 @@ function App() {
           onRemoveDateRange={handleRemoveDateRange}
         />
 
-        {/* Task Stats */}
         <div className="mb-6 p-4 bg-light-surface dark:bg-dark-surface border-2 border-light-border dark:border-dark-border">
           <div className="grid grid-cols-4 gap-4">
             <div>
@@ -246,7 +279,6 @@ function App() {
           </div>
         </div>
 
-        {/* Kanban Board or List View */}
         {viewMode === 'kanban' ? (
           <KanbanBoard
             tasks={filteredTasks}
@@ -264,7 +296,6 @@ function App() {
           />
         )}
 
-        {/* Create Task Modal */}
         <TaskModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
@@ -277,7 +308,6 @@ function App() {
           />
         </TaskModal>
 
-        {/* Edit Task Modal */}
         <TaskModal
           isOpen={!!editingTask}
           onClose={() => setEditingTask(null)}
@@ -294,7 +324,6 @@ function App() {
           )}
         </TaskModal>
 
-        {/* Keyboard Shortcuts Modal */}
         <KeyboardShortcutsModal
           isOpen={showShortcuts}
           onClose={() => setShowShortcuts(false)}

@@ -30,6 +30,7 @@ const shortcutGroups = [
       { key: 'K', description: 'Switch to Kanban view' },
       { key: 'L', description: 'Switch to List view' },
       { key: 'F', description: 'Toggle filter panel' },
+      { key: 'A', description: 'Toggle archive view' },
     ],
   },
   {
@@ -44,7 +45,10 @@ const shortcutGroups = [
   {
     title: 'Advanced',
     shortcuts: [
-      { key: `${getModifierKey()} + K`, description: 'Quick command (coming soon)' },
+      {
+        key: `${getModifierKey()} + K`,
+        description: 'Quick command (coming soon)',
+      },
     ],
   },
 ];
@@ -53,7 +57,10 @@ const shortcutGroups = [
 // KEYBOARD SHORTCUTS MODAL COMPONENT
 // ==========================================
 
-export function KeyboardShortcutsModal({ isOpen, onClose }: KeyboardShortcutsModalProps) {
+export function KeyboardShortcutsModal({
+  isOpen,
+  onClose,
+}: KeyboardShortcutsModalProps) {
   return (
     <AnimatePresence>
       {isOpen && (
@@ -135,7 +142,8 @@ export function KeyboardShortcutsModal({ isOpen, onClose }: KeyboardShortcutsMod
                 {/* Footer Tip */}
                 <div className="pt-4 border-t-2 border-light-border dark:border-dark-border">
                   <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary text-center">
-                    💡 Tip: Shortcuts work everywhere except when typing in text fields
+                    💡 Tip: Shortcuts work everywhere except when typing in text
+                    fields
                   </p>
                 </div>
               </div>
