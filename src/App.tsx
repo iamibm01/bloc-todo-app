@@ -1,33 +1,34 @@
 import { useState } from 'react';
 import { MainLayout } from './components/layout';
-import { TaskCard, TaskModal, TaskForm } from './components/tasks';
+import { KanbanBoard } from './components/board';
+import { TaskModal, TaskForm } from './components/tasks';
 import { Button } from './components/common';
 import { useApp } from './context/AppContext';
-import { CreateTaskInput, UpdateTaskInput } from './types';
+import { CreateTaskInput, UpdateTaskInput, TaskStatus } from './types';
 
 function App() {
   const {
     projects,
     tasks,
     activeProjectId,
+    viewMode,
     createTask,
     updateTask,
     deleteTask,
+    reorderTasks,
   } = useApp();
+  
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<string | null>(null);
 
   const activeProject = projects.find((p) => p.id === activeProjectId);
-  const projectTasks = tasks.filter(
-    (t) => t.projectId === activeProjectId && !t.isArchived
-  );
+  const projectTasks = tasks.filter((t) => t.projectId === activeProjectId && !t.isArchived);
 
-  // Group tasks by status
+  // Group tasks by status for stats
   const todoTasks = projectTasks.filter((t) => t.status === 'todo');
   const inProgressTasks = projectTasks.filter((t) => t.status === 'inProgress');
   const doneTasks = projectTasks.filter((t) => t.status === 'done');
 
-  // Handle create task
   // Handle create task
   const handleCreateTask = (data: CreateTaskInput | UpdateTaskInput) => {
     if (activeProjectId) {
@@ -43,6 +44,12 @@ function App() {
       setEditingTask(null);
     }
   };
+
+  // Handle task move (status change)
+  const handleTaskMove = (taskId: string, newStatus: TaskStatus) => {
+    updateTask(taskId, { status: newStatus });
+  };
+
   // Handle delete task
   const handleDeleteTask = (taskId: string) => {
     if (confirm('Are you sure you want to delete this task?')) {
@@ -50,13 +57,11 @@ function App() {
     }
   };
 
-  const taskToEdit = editingTask
-    ? tasks.find((t) => t.id === editingTask)
-    : undefined;
+  const taskToEdit = editingTask ? tasks.find((t) => t.id === editingTask) : undefined;
 
   return (
     <MainLayout>
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         {/* Project Header */}
         {activeProject && (
           <div className="mb-8">
@@ -79,7 +84,7 @@ function App() {
               </div>
 
               {/* Create Task Button */}
-              <Button onClick={() => setIsModalOpen(true)} variant="primary">
+              <Button onClick={() => setIsModalOpen(true)} variant="primary" size="lg">
                 + New Task
               </Button>
             </div>
@@ -88,9 +93,9 @@ function App() {
 
         {/* Task Stats */}
         <div className="mb-6 p-4 bg-light-surface dark:bg-dark-surface border-2 border-light-border dark:border-dark-border">
-          <div className="flex items-center justify-between">
+          <div className="grid grid-cols-4 gap-4">
             <div>
-              <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
+              <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary mb-1">
                 Total Tasks
               </p>
               <p className="text-3xl font-display font-bold text-light-text-primary dark:text-dark-text-primary">
@@ -98,7 +103,7 @@ function App() {
               </p>
             </div>
             <div>
-              <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
+              <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary mb-1">
                 To Do
               </p>
               <p className="text-2xl font-display font-bold text-pastel-blue dark:text-muted-blue">
@@ -106,7 +111,7 @@ function App() {
               </p>
             </div>
             <div>
-              <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
+              <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary mb-1">
                 In Progress
               </p>
               <p className="text-2xl font-display font-bold text-pastel-orange dark:text-muted-orange">
@@ -114,7 +119,7 @@ function App() {
               </p>
             </div>
             <div>
-              <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
+              <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary mb-1">
                 Done
               </p>
               <p className="text-2xl font-display font-bold text-pastel-purple dark:text-muted-purple">
@@ -124,74 +129,25 @@ function App() {
           </div>
         </div>
 
-        {/* Simple Task List (Kanban Board Coming in Next Phase) */}
-        <div className="space-y-6">
-          {/* To Do */}
-          <div>
-            <h2 className="text-xl font-display font-bold mb-3 text-light-text-primary dark:text-dark-text-primary">
-              To Do ({todoTasks.length})
-            </h2>
-            <div className="space-y-3">
-              {todoTasks.map((task) => (
-                <TaskCard
-                  key={task.id}
-                  task={task}
-                  onClick={() => setEditingTask(task.id)}
-                  onDelete={() => handleDeleteTask(task.id)}
-                />
-              ))}
-              {todoTasks.length === 0 && (
-                <p className="text-light-text-secondary dark:text-dark-text-secondary text-center py-8">
-                  No tasks to do
-                </p>
-              )}
-            </div>
+        {/* Kanban Board or List View */}
+        {viewMode === 'kanban' ? (
+          <KanbanBoard
+            tasks={projectTasks}
+            onTaskClick={setEditingTask}
+            onTaskDelete={handleDeleteTask}
+            onTaskMove={handleTaskMove}
+            onTaskReorder={reorderTasks}
+          />
+        ) : (
+          <div className="p-12 bg-light-surface dark:bg-dark-surface border-2 border-dashed border-light-border dark:border-dark-border text-center">
+            <p className="text-light-text-secondary dark:text-dark-text-secondary font-display text-xl">
+              List View Coming Soon! 📋
+            </p>
+            <p className="text-light-text-secondary dark:text-dark-text-secondary mt-2">
+              Switch to Kanban view to see your tasks
+            </p>
           </div>
-
-          {/* In Progress */}
-          <div>
-            <h2 className="text-xl font-display font-bold mb-3 text-light-text-primary dark:text-dark-text-primary">
-              In Progress ({inProgressTasks.length})
-            </h2>
-            <div className="space-y-3">
-              {inProgressTasks.map((task) => (
-                <TaskCard
-                  key={task.id}
-                  task={task}
-                  onClick={() => setEditingTask(task.id)}
-                  onDelete={() => handleDeleteTask(task.id)}
-                />
-              ))}
-              {inProgressTasks.length === 0 && (
-                <p className="text-light-text-secondary dark:text-dark-text-secondary text-center py-8">
-                  No tasks in progress
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Done */}
-          <div>
-            <h2 className="text-xl font-display font-bold mb-3 text-light-text-primary dark:text-dark-text-primary">
-              Done ({doneTasks.length})
-            </h2>
-            <div className="space-y-3">
-              {doneTasks.map((task) => (
-                <TaskCard
-                  key={task.id}
-                  task={task}
-                  onClick={() => setEditingTask(task.id)}
-                  onDelete={() => handleDeleteTask(task.id)}
-                />
-              ))}
-              {doneTasks.length === 0 && (
-                <p className="text-light-text-secondary dark:text-dark-text-secondary text-center py-8">
-                  No completed tasks
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
+        )}
 
         {/* Create Task Modal */}
         <TaskModal
