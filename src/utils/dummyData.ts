@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import { Project, Task, TaskStatus, TaskPriority } from '@/types';
-import { PROJECT_COLORS } from '@/constants';
+import { PROJECT_COLORS, DEFAULT_PROJECT } from '@/constants';
 
 // ==========================================
 // SAMPLE PROJECT DATA
@@ -470,25 +470,38 @@ const taskTemplates = {
 export const generateDummyData = () => {
   const now = new Date();
   
-  // Generate projects
-  const projects: Project[] = projectTemplates.map((template) => ({
+  // Generate projects - ALWAYS include Inbox first
+  const inboxProject: Project = {
+    id: 'inbox',
+    name: DEFAULT_PROJECT.name,
+    description: DEFAULT_PROJECT.description,
+    color: DEFAULT_PROJECT.color,
+    createdAt: new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000), // 60 days ago
+    updatedAt: now,
+    isArchived: false,
+  };
+
+  const otherProjects: Project[] = projectTemplates.map((template) => ({
     id: uuidv4(),
     name: template.name,
     description: template.description,
     color: template.color,
-    createdAt: new Date(now.getTime() - Math.random() * 30 * 24 * 60 * 60 * 1000), // Random date in last 30 days
+    createdAt: new Date(now.getTime() - Math.random() * 30 * 24 * 60 * 60 * 1000),
     updatedAt: now,
     isArchived: false,
   }));
 
-  // Generate tasks for each project
+  // Combine: Inbox first, then others
+  const projects: Project[] = [inboxProject, ...otherProjects];
+
+  // Generate tasks for each project (except Inbox - keep it empty)
   const tasks: Task[] = [];
   
-  projects.forEach((project) => {
+  otherProjects.forEach((project) => {
     const projectTasks = taskTemplates[project.name as keyof typeof taskTemplates] || [];
     
     projectTasks.forEach((template) => {
-      const createdAt = new Date(now.getTime() - Math.random() * 20 * 24 * 60 * 60 * 1000); // Random date in last 20 days
+      const createdAt = new Date(now.getTime() - Math.random() * 20 * 24 * 60 * 60 * 1000);
       const dueDate = template.daysFromNow 
         ? new Date(now.getTime() + template.daysFromNow * 24 * 60 * 60 * 1000)
         : undefined;

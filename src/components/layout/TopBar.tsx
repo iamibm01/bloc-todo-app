@@ -9,7 +9,6 @@ import { SearchBar, FilterPanel } from '@/components/common';
 // ==========================================
 
 interface TopBarProps {
-  onSearchFocus?: () => void;
   searchInputRef?: RefObject<HTMLInputElement | null>;
 }
 
@@ -28,6 +27,10 @@ export function TopBar({ searchInputRef }: TopBarProps) {
 
   // Get all unique tags from tasks
   const allTags = Array.from(new Set(tasks.flatMap((task) => task.tags)));
+
+  // Check if any filters are active
+  const hasActiveFilters =
+    filters.priority || (filters.tags && filters.tags.length > 0) || filters.dateRange;
 
   return (
     <header className="sticky top-0 z-50 bg-light-surface dark:bg-dark-surface border-b-3 border-light-text-primary dark:border-dark-text-primary">
@@ -50,18 +53,19 @@ export function TopBar({ searchInputRef }: TopBarProps) {
           />
         </div>
 
-        {/* Right: Filter + View Toggle + Theme Toggle */}
-        <div className="flex items-center gap-2">
-          {/* Filter Panel */}
+        {/* Right: Controls */}
+        <div className="flex items-center gap-0">
+          {/* Filter Button */}
           <FilterPanel
             filters={filters}
             availableTags={allTags}
             onFiltersChange={setFilters}
             onClearFilters={clearFilters}
+            hasActiveFilters={hasActiveFilters}
           />
 
           {/* View Mode Toggle */}
-          <div className="flex border-2 border-light-text-primary dark:border-dark-text-primary">
+          <div className="flex border-2 border-light-text-primary dark:border-dark-text-primary border-l-0">
             <button
               onClick={() => setViewMode('kanban')}
               className={`
@@ -95,7 +99,7 @@ export function TopBar({ searchInputRef }: TopBarProps) {
           {/* Theme Toggle */}
           <motion.button
             onClick={toggleTheme}
-            className="p-2 border-2 border-light-text-primary dark:border-dark-text-primary bg-light-surface dark:bg-dark-surface hover:bg-pastel-yellow dark:hover:bg-muted-yellow transition-colors"
+            className="p-2 border-2 border-light-text-primary dark:border-dark-text-primary border-l-0 bg-light-surface dark:bg-dark-surface hover:bg-pastel-yellow dark:hover:bg-muted-yellow transition-colors"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             aria-label="Toggle theme"
