@@ -119,10 +119,10 @@ export const sortByPriorityAndDueDate = (tasks: Task[]): Task[] => {
 // ==========================================
 
 /**
- * Sort by status (todo, inProgress, done), then by priority within each status
+ * Sort by status (brainstorm, todo, inProgress, done), then by priority within each status
  */
 export const sortByStatusAndPriority = (tasks: Task[]): Task[] => {
-  const statusOrder = { todo: 0, inProgress: 1, done: 2 };
+  const statusOrder = { brainstorm: 0, todo: 1, inProgress: 2, done: 3 };
   
   return [...tasks].sort((a, b) => {
     // First sort by status

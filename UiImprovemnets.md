@@ -1,6 +1,6 @@
 ## Ui/UX Improvements
-- sidebar expands on hover collapses when mouse clears the sidebar or click to expand click outside to collapse
-- add another kanban column for brainstorming ideas can later be moved into todo 
+- ~~sidebar expands on hover collapses when mouse clears the sidebar or click to expand click outside to collapse~~
+~~- add another kanban column for brainstorming ideas can later be moved into todo ~~
 - increase character limit in description
 - change column colors done should be green
 - do something with project icons
@@ -11,6 +11,7 @@
 - tags in task modal almost invisible in dark mode
 - esc to exit modals
 - keyboard shootcut and archive icons
-- 
+- click in empty space on kanban column to add task
+
 
 

@@ -7,7 +7,8 @@ import { useApp } from '@/context/AppContext';
 // ==========================================
 
 export function Sidebar() {
-  const { projects, activeProjectId, setActiveProject, createProject } = useApp();
+  const { projects, activeProjectId, setActiveProject, createProject } =
+    useApp();
   const [isExpanded, setIsExpanded] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
@@ -198,7 +199,9 @@ export function Sidebar() {
                       d="M12 4v16m8-8H4"
                     />
                   </svg>
-                  <span className="text-sm font-display font-semibold">New Project</span>
+                  <span className="text-sm font-display font-semibold">
+                    New Project
+                  </span>
                 </motion.button>
               )}
 
@@ -214,7 +217,9 @@ export function Sidebar() {
                   className="w-full px-3 py-2 border-2 border-light-border dark:border-dark-border hover:border-light-text-primary dark:hover:border-dark-text-primary text-light-text-secondary dark:text-dark-text-secondary hover:text-light-text-primary dark:hover:text-dark-text-primary transition-all flex items-center gap-2"
                 >
                   <span className="text-lg">📦</span>
-                  <span className="text-sm font-display font-semibold">Archive</span>
+                  <span className="text-sm font-display font-semibold">
+                    Archive
+                  </span>
                 </button>
               </motion.div>
             </motion.div>

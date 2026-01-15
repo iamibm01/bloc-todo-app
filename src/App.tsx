@@ -3,7 +3,11 @@ import { MainLayout } from './components/layout';
 import { KanbanBoard, ListView } from './components/board';
 import { ArchiveView } from './components/views';
 import { TaskModal, TaskForm } from './components/tasks';
-import { Button, ActiveFilters, KeyboardShortcutsModal } from './components/common';
+import {
+  Button,
+  ActiveFilters,
+  KeyboardShortcutsModal,
+} from './components/common';
 import { useApp } from './context/AppContext';
 import { CreateTaskInput, UpdateTaskInput, TaskStatus } from './types';
 import { applyFilters, filterBySearch } from './utils/filtering';
@@ -51,7 +55,9 @@ function App() {
 
   // Filter and search tasks
   const filteredTasks = useMemo(() => {
-    let result = tasks.filter((t) => t.projectId === activeProjectId && !t.isArchived);
+    let result = tasks.filter(
+      (t) => t.projectId === activeProjectId && !t.isArchived
+    );
 
     if (searchQuery) {
       result = filterBySearch(result, searchQuery);
@@ -62,10 +68,14 @@ function App() {
     return result;
   }, [tasks, activeProjectId, searchQuery, filters]);
 
+  const brainstormTasks = filteredTasks.filter(
+    (t) => t.status === 'brainstorm'
+  );
   const todoTasks = filteredTasks.filter((t) => t.status === 'todo');
-  const inProgressTasks = filteredTasks.filter((t) => t.status === 'inProgress');
+  const inProgressTasks = filteredTasks.filter(
+    (t) => t.status === 'inProgress'
+  );
   const doneTasks = filteredTasks.filter((t) => t.status === 'done');
-
   // Keyboard shortcuts
   useKeyboardShortcuts(
     [
@@ -121,22 +131,26 @@ function App() {
       },
       {
         key: '1',
-        callback: () => !showArchive && setFilters({ ...filters, priority: 'high' }),
+        callback: () =>
+          !showArchive && setFilters({ ...filters, priority: 'high' }),
         description: 'Filter by High priority',
       },
       {
         key: '2',
-        callback: () => !showArchive && setFilters({ ...filters, priority: 'medium' }),
+        callback: () =>
+          !showArchive && setFilters({ ...filters, priority: 'medium' }),
         description: 'Filter by Medium priority',
       },
       {
         key: '3',
-        callback: () => !showArchive && setFilters({ ...filters, priority: 'low' }),
+        callback: () =>
+          !showArchive && setFilters({ ...filters, priority: 'low' }),
         description: 'Filter by Low priority',
       },
       {
         key: '0',
-        callback: () => !showArchive && setFilters({ ...filters, priority: undefined }),
+        callback: () =>
+          !showArchive && setFilters({ ...filters, priority: undefined }),
         description: 'Clear priority filter',
       },
     ],
@@ -180,7 +194,9 @@ function App() {
     setFilters({ ...filters, dateRange: undefined });
   };
 
-  const taskToEdit = editingTask ? tasks.find((t) => t.id === editingTask) : undefined;
+  const taskToEdit = editingTask
+    ? tasks.find((t) => t.id === editingTask)
+    : undefined;
 
   // Render archive view
   if (showArchive) {
@@ -217,7 +233,11 @@ function App() {
               </div>
 
               <div className="flex items-center gap-2">
-                <Button onClick={() => setIsModalOpen(true)} variant="primary" size="lg">
+                <Button
+                  onClick={() => setIsModalOpen(true)}
+                  variant="primary"
+                  size="lg"
+                >
                   + New Task
                 </Button>
                 <Button
@@ -241,15 +261,29 @@ function App() {
         />
 
         <div className="mb-6 p-4 bg-light-surface dark:bg-dark-surface border-2 border-light-border dark:border-dark-border">
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-5 gap-4">
             <div>
               <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary mb-1">
-                {searchQuery || filters.priority || filters.tags?.length || filters.dateRange
+                {searchQuery ||
+                filters.priority ||
+                filters.tags?.length ||
+                filters.dateRange
                   ? 'Filtered Tasks'
                   : 'Total Tasks'}
               </p>
               <p className="text-3xl font-display font-bold text-light-text-primary dark:text-dark-text-primary">
                 {filteredTasks.length}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary mb-1">
+                💡 Ideas
+              </p>
+              <p
+                className="text-2xl font-display font-bold"
+                style={{ color: '#E0BBE4' }}
+              >
+                {brainstormTasks.length}
               </p>
             </div>
             <div>
@@ -272,13 +306,12 @@ function App() {
               <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary mb-1">
                 Done
               </p>
-              <p className="text-2xl font-display font-bold text-pastel-purple dark:text-muted-purple">
+              <p className="text-2xl font-display font-bold text-pastel-green dark:text-muted-green">
                 {doneTasks.length}
               </p>
             </div>
           </div>
         </div>
-
         {viewMode === 'kanban' ? (
           <KanbanBoard
             tasks={filteredTasks}

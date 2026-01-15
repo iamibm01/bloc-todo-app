@@ -44,12 +44,13 @@ export function KanbanBoard({
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8, // Require 8px movement before drag starts
+        distance: 8,
       },
     })
   );
 
   // Group tasks by status
+  const brainstormTasks = tasks.filter((t) => t.status === 'brainstorm');
   const todoTasks = tasks.filter((t) => t.status === 'todo');
   const inProgressTasks = tasks.filter((t) => t.status === 'inProgress');
   const doneTasks = tasks.filter((t) => t.status === 'done');
@@ -71,12 +72,10 @@ export function KanbanBoard({
     const activeId = active.id as string;
     const overId = over.id as string;
 
-    // Find the task being dragged
     const activeTask = tasks.find((t) => t.id === activeId);
     if (!activeTask) return;
 
-    // Check if we're over a column (status)
-    const validStatuses: TaskStatus[] = ['todo', 'inProgress', 'done'];
+    const validStatuses: TaskStatus[] = ['brainstorm', 'todo', 'inProgress', 'done'];
     if (validStatuses.includes(overId as TaskStatus)) {
       const newStatus = overId as TaskStatus;
       if (activeTask.status !== newStatus) {
@@ -97,7 +96,6 @@ export function KanbanBoard({
     const activeId = active.id as string;
     const overId = over.id as string;
 
-    // Find both tasks
     const activeTask = tasks.find((t) => t.id === activeId);
     const overTask = tasks.find((t) => t.id === overId);
 
@@ -106,7 +104,6 @@ export function KanbanBoard({
       return;
     }
 
-    // If dropped on another task in the same column, reorder
     if (overTask && activeTask.status === overTask.status) {
       const oldIndex = tasks.findIndex((t) => t.id === activeId);
       const newIndex = tasks.findIndex((t) => t.id === overId);
@@ -126,6 +123,18 @@ export function KanbanBoard({
       onDragEnd={handleDragEnd}
     >
       <div className="flex gap-6 overflow-x-auto pb-4">
+        {/* Brainstorm Column */}
+        <KanbanColumn status="brainstorm" tasks={brainstormTasks}>
+          {brainstormTasks.map((task) => (
+            <DraggableTaskCard
+              key={task.id}
+              task={task}
+              onClick={() => onTaskClick(task.id)}
+              onDelete={() => onTaskDelete(task.id)}
+            />
+          ))}
+        </KanbanColumn>
+
         {/* To Do Column */}
         <KanbanColumn status="todo" tasks={todoTasks}>
           {todoTasks.map((task) => (
@@ -163,7 +172,7 @@ export function KanbanBoard({
         </KanbanColumn>
       </div>
 
-      {/* Drag Overlay - Shows the card being dragged */}
+      {/* Drag Overlay */}
       <DragOverlay>
         {activeTask ? (
           <div className="rotate-3 cursor-grabbing">
