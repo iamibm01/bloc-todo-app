@@ -3,11 +3,7 @@ import { MainLayout } from './components/layout';
 import { KanbanBoard, ListView } from './components/board';
 import { ArchiveView } from './components/views';
 import { TaskModal, TaskForm } from './components/tasks';
-import {
-  Button,
-  ActiveFilters,
-  KeyboardShortcutsModal,
-} from './components/common';
+import { Button, ActiveFilters, KeyboardShortcutsModal, DataLoader } from './components/common';
 import { useApp } from './context/AppContext';
 import { CreateTaskInput, UpdateTaskInput, TaskStatus } from './types';
 import { applyFilters, filterBySearch } from './utils/filtering';
@@ -361,7 +357,9 @@ function App() {
           isOpen={showShortcuts}
           onClose={() => setShowShortcuts(false)}
         />
+        <DataLoader />
       </div>
+      
     </MainLayout>
   );
 }
