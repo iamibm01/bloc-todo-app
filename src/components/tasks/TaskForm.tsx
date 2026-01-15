@@ -1,9 +1,26 @@
 import { useState, FormEvent } from 'react';
 import { Input, Textarea, Select, Button, Tag } from '@/components/common';
 import { SelectOption } from '@/components/common';
-import { Task, CreateTaskInput, UpdateTaskInput, TaskPriority, TaskStatus } from '@/types';
-import { PRIORITY_LABELS, STATUS_LABELS, MAX_LENGTHS } from '@/constants';
-import { countWords, exceedsWordLimit, getWordCountMessage } from '@/utils/textHelpers';
+import {
+  Task,
+  CreateTaskInput,
+  UpdateTaskInput,
+  TaskPriority,
+  TaskStatus,
+} from '@/types';
+import {
+  PRIORITY_LABELS,
+  STATUS_LABELS,
+  MAX_LENGTHS,
+  PASTEL_COLORS_LIGHT,
+  PASTEL_COLORS_DARK,
+} from '@/constants';
+import {
+  countWords,
+  exceedsWordLimit,
+  getWordCountMessage,
+} from '@/utils/textHelpers';
+import { useTheme } from '@/context/ThemeContext';
 
 // ==========================================
 // TASK FORM PROPS
@@ -21,11 +38,23 @@ interface TaskFormProps {
 // TASK FORM COMPONENT
 // ==========================================
 
-export function TaskForm({ task, projectId, onSubmit, onCancel, isEditing = false }: TaskFormProps) {
+export function TaskForm({
+  task,
+  projectId,
+  onSubmit,
+  onCancel,
+  isEditing = false,
+}: TaskFormProps) {
+  const { theme } = useTheme();
+  const colors = theme === 'light' ? PASTEL_COLORS_LIGHT : PASTEL_COLORS_DARK;
   const [title, setTitle] = useState(task?.title || '');
   const [description, setDescription] = useState(task?.description || '');
-  const [priority, setPriority] = useState<TaskPriority>(task?.priority || 'medium');
-  const [status, setStatus] = useState<TaskStatus>(task?.status || 'brainstorm');
+  const [priority, setPriority] = useState<TaskPriority>(
+    task?.priority || 'medium'
+  );
+  const [status, setStatus] = useState<TaskStatus>(
+    task?.status || 'brainstorm'
+  );
   const [dueDate, setDueDate] = useState(
     task?.dueDate ? task.dueDate.toISOString().split('T')[0] : ''
   );
@@ -50,8 +79,14 @@ export function TaskForm({ task, projectId, onSubmit, onCancel, isEditing = fals
 
   // Calculate word count and remaining
   const descriptionWordCount = countWords(description);
-  const descriptionExceedsLimit = exceedsWordLimit(description, MAX_LENGTHS.TASK_DESCRIPTION_WORDS);
-  const descriptionMessage = getWordCountMessage(description, MAX_LENGTHS.TASK_DESCRIPTION_WORDS);
+  const descriptionExceedsLimit = exceedsWordLimit(
+    description,
+    MAX_LENGTHS.TASK_DESCRIPTION_WORDS
+  );
+  const descriptionMessage = getWordCountMessage(
+    description,
+    MAX_LENGTHS.TASK_DESCRIPTION_WORDS
+  );
 
   // Validate form
   const validate = (): boolean => {
@@ -92,7 +127,11 @@ export function TaskForm({ task, projectId, onSubmit, onCancel, isEditing = fals
   // Add tag
   const handleAddTag = () => {
     const trimmedTag = tagInput.trim();
-    if (trimmedTag && !tags.includes(trimmedTag) && trimmedTag.length <= MAX_LENGTHS.TAG_NAME) {
+    if (
+      trimmedTag &&
+      !tags.includes(trimmedTag) &&
+      trimmedTag.length <= MAX_LENGTHS.TAG_NAME
+    ) {
       setTags([...tags, trimmedTag]);
       setTagInput('');
     }
@@ -141,8 +180,8 @@ export function TaskForm({ task, projectId, onSubmit, onCancel, isEditing = fals
               descriptionExceedsLimit
                 ? 'text-pastel-red dark:text-muted-red font-semibold'
                 : descriptionWordCount > MAX_LENGTHS.TASK_DESCRIPTION_WORDS - 20
-                ? 'text-pastel-orange dark:text-muted-orange'
-                : 'text-light-text-secondary dark:text-dark-text-secondary'
+                  ? 'text-pastel-orange dark:text-muted-orange'
+                  : 'text-light-text-secondary dark:text-dark-text-secondary'
             }`}
           >
             {descriptionMessage}
@@ -200,12 +239,18 @@ export function TaskForm({ task, projectId, onSubmit, onCancel, isEditing = fals
             value={tagInput}
             onChange={(e) => setTagInput(e.target.value)}
             onKeyDown={handleTagKeyPress}
-            helperText={tagInput.length > MAX_LENGTHS.TAG_NAME ? `Tag is too long (max ${MAX_LENGTHS.TAG_NAME} characters)` : ''}
+            helperText={
+              tagInput.length > MAX_LENGTHS.TAG_NAME
+                ? `Tag is too long (max ${MAX_LENGTHS.TAG_NAME} characters)`
+                : ''
+            }
           />
           <Button
             type="button"
             onClick={handleAddTag}
-            disabled={!tagInput.trim() || tagInput.length > MAX_LENGTHS.TAG_NAME}
+            disabled={
+              !tagInput.trim() || tagInput.length > MAX_LENGTHS.TAG_NAME
+            }
             variant="secondary"
           >
             Add
@@ -216,7 +261,11 @@ export function TaskForm({ task, projectId, onSubmit, onCancel, isEditing = fals
         {tags.length > 0 && (
           <div className="flex flex-wrap gap-2">
             {tags.map((tag, index) => (
-              <Tag key={index} onRemove={() => handleRemoveTag(tag)}>
+              <Tag
+                key={index}
+                color={colors.accent}
+                onRemove={() => handleRemoveTag(tag)}
+              >
                 {tag}
               </Tag>
             ))}
@@ -226,7 +275,12 @@ export function TaskForm({ task, projectId, onSubmit, onCancel, isEditing = fals
 
       {/* Form Actions */}
       <div className="flex gap-3 pt-4 border-t-2 border-light-border dark:border-dark-border">
-        <Button type="submit" variant="primary" fullWidth disabled={descriptionExceedsLimit}>
+        <Button
+          type="submit"
+          variant="primary"
+          fullWidth
+          disabled={descriptionExceedsLimit}
+        >
           {isEditing ? 'Update Task' : 'Create Task'}
         </Button>
         <Button type="button" onClick={onCancel} variant="secondary" fullWidth>

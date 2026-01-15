@@ -6,7 +6,7 @@
 - do something with project icons
 - keyboard shortcut icon 
 - clear search icon not centered
-- filter should be just the icon
+-~~ filter should be just the icon~~
 - inbox to show all tasks??
 - tags in task modal almost invisible in dark mode
 - esc to exit modals
