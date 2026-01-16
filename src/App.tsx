@@ -3,12 +3,7 @@ import { MainLayout } from './components/layout';
 import { KanbanBoard, ListView } from './components/board';
 import { ArchiveView } from './components/views';
 import { TaskModal, TaskForm } from './components/tasks';
-import {
-  Button,
-  ActiveFilters,
-  KeyboardShortcutsModal,
-  DataLoader,
-} from './components/common';
+import { ActiveFilters, KeyboardShortcutsModal, DataLoader } from './components/common';
 import { useApp } from './context/AppContext';
 import { CreateTaskInput, UpdateTaskInput, TaskStatus } from './types';
 import { applyFilters, filterBySearch } from './utils/filtering';
@@ -56,9 +51,7 @@ function App() {
 
   // Filter and search tasks
   const filteredTasks = useMemo(() => {
-    let result = tasks.filter(
-      (t) => t.projectId === activeProjectId && !t.isArchived
-    );
+    let result = tasks.filter((t) => t.projectId === activeProjectId && !t.isArchived);
 
     if (searchQuery) {
       result = filterBySearch(result, searchQuery);
@@ -69,14 +62,11 @@ function App() {
     return result;
   }, [tasks, activeProjectId, searchQuery, filters]);
 
-  const brainstormTasks = filteredTasks.filter(
-    (t) => t.status === 'brainstorm'
-  );
+  const brainstormTasks = filteredTasks.filter((t) => t.status === 'brainstorm');
   const todoTasks = filteredTasks.filter((t) => t.status === 'todo');
-  const inProgressTasks = filteredTasks.filter(
-    (t) => t.status === 'inProgress'
-  );
+  const inProgressTasks = filteredTasks.filter((t) => t.status === 'inProgress');
   const doneTasks = filteredTasks.filter((t) => t.status === 'done');
+
   // Keyboard shortcuts
   useKeyboardShortcuts(
     [
@@ -132,26 +122,22 @@ function App() {
       },
       {
         key: '1',
-        callback: () =>
-          !showArchive && setFilters({ ...filters, priority: 'high' }),
+        callback: () => !showArchive && setFilters({ ...filters, priority: 'high' }),
         description: 'Filter by High priority',
       },
       {
         key: '2',
-        callback: () =>
-          !showArchive && setFilters({ ...filters, priority: 'medium' }),
+        callback: () => !showArchive && setFilters({ ...filters, priority: 'medium' }),
         description: 'Filter by Medium priority',
       },
       {
         key: '3',
-        callback: () =>
-          !showArchive && setFilters({ ...filters, priority: 'low' }),
+        callback: () => !showArchive && setFilters({ ...filters, priority: 'low' }),
         description: 'Filter by Low priority',
       },
       {
         key: '0',
-        callback: () =>
-          !showArchive && setFilters({ ...filters, priority: undefined }),
+        callback: () => !showArchive && setFilters({ ...filters, priority: undefined }),
         description: 'Clear priority filter',
       },
     ],
@@ -195,63 +181,70 @@ function App() {
     setFilters({ ...filters, dateRange: undefined });
   };
 
-  const taskToEdit = editingTask
-    ? tasks.find((t) => t.id === editingTask)
-    : undefined;
+  const taskToEdit = editingTask ? tasks.find((t) => t.id === editingTask) : undefined;
 
   // Render archive view
   if (showArchive) {
     return (
-      <MainLayout
+      <MainLayout 
         searchInputRef={searchInputRef}
         onShowShortcuts={() => setShowShortcuts(true)}
       >
         <ArchiveView />
+        <KeyboardShortcutsModal
+          isOpen={showShortcuts}
+          onClose={() => setShowShortcuts(false)}
+        />
+        <DataLoader />
       </MainLayout>
     );
   }
 
   // Render normal project view
   return (
-    <MainLayout
+    <MainLayout 
       searchInputRef={searchInputRef}
       onShowShortcuts={() => setShowShortcuts(true)}
     >
-      <div className="max-w-7xl mx-auto">
-        {/* Project Header */}
+      <div className="max-w-[1800px] mx-auto pt-2">
+        {/* Project Header with Stats and New Task Button */}
         {activeProject && (
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-4">
+          <div className="mb-6">
+            <div className="flex items-start gap-6">
+              {/* Left: Project Info */}
+              <div className="flex items-center gap-4 flex-1 min-w-0">
                 <div
-                  className="w-8 h-8 border-2 border-light-text-primary dark:border-dark-text-primary"
+                  className="w-10 h-10 border-2 border-light-text-primary dark:border-dark-text-primary flex-shrink-0"
                   style={{ backgroundColor: activeProject.color }}
                 />
-                <div>
-                  <h1 className="text-4xl font-display font-bold text-light-text-primary dark:text-dark-text-primary">
+                <div className="min-w-0">
+                  <h1 className="text-3xl font-display font-bold text-light-text-primary dark:text-dark-text-primary truncate">
                     {activeProject.name}
                   </h1>
                   {activeProject.description && (
-                    <p className="text-light-text-secondary dark:text-dark-text-secondary">
+                    <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary truncate">
                       {activeProject.description}
                     </p>
                   )}
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <Button
+              
+            
+              {/* Right: New Task Button - Same height as stats */}
+              <div className="flex-shrink-0">
+                <button
                   onClick={() => setIsModalOpen(true)}
-                  variant="primary"
-                  size="lg"
+                  className="h-full px-6 py-3 bg-pastel-pink dark:bg-muted-pink border-2 border-light-text-primary dark:border-dark-text-primary hover:scale-105 transition-transform font-display font-bold text-light-text-primary dark:text-dark-text-primary whitespace-nowrap"
                 >
                   + New Task
-                </Button>
+                </button>
               </div>
             </div>
           </div>
         )}
 
+        {/* Active Filters Display */}
         <ActiveFilters
           filters={filters}
           onRemovePriority={handleRemovePriority}
@@ -259,58 +252,7 @@ function App() {
           onRemoveDateRange={handleRemoveDateRange}
         />
 
-        <div className="mb-6 p-4 bg-light-surface dark:bg-dark-surface border-2 border-light-border dark:border-dark-border">
-          <div className="grid grid-cols-5 gap-4">
-            <div>
-              <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary mb-1">
-                {searchQuery ||
-                filters.priority ||
-                filters.tags?.length ||
-                filters.dateRange
-                  ? 'Filtered Tasks'
-                  : 'Total Tasks'}
-              </p>
-              <p className="text-3xl font-display font-bold text-light-text-primary dark:text-dark-text-primary">
-                {filteredTasks.length}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary mb-1">
-                💡 Ideas
-              </p>
-              <p
-                className="text-2xl font-display font-bold"
-                style={{ color: '#E0BBE4' }}
-              >
-                {brainstormTasks.length}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary mb-1">
-                To Do
-              </p>
-              <p className="text-2xl font-display font-bold text-pastel-blue dark:text-muted-blue">
-                {todoTasks.length}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary mb-1">
-                In Progress
-              </p>
-              <p className="text-2xl font-display font-bold text-pastel-orange dark:text-muted-orange">
-                {inProgressTasks.length}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary mb-1">
-                Done
-              </p>
-              <p className="text-2xl font-display font-bold text-pastel-green dark:text-muted-green">
-                {doneTasks.length}
-              </p>
-            </div>
-          </div>
-        </div>
+        {/* Kanban Board or List View */}
         {viewMode === 'kanban' ? (
           <KanbanBoard
             tasks={filteredTasks}
@@ -328,6 +270,7 @@ function App() {
           />
         )}
 
+        {/* Create Task Modal */}
         <TaskModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
@@ -340,6 +283,7 @@ function App() {
           />
         </TaskModal>
 
+        {/* Edit Task Modal */}
         <TaskModal
           isOpen={!!editingTask}
           onClose={() => setEditingTask(null)}
@@ -356,10 +300,13 @@ function App() {
           )}
         </TaskModal>
 
+        {/* Keyboard Shortcuts Modal */}
         <KeyboardShortcutsModal
           isOpen={showShortcuts}
           onClose={() => setShowShortcuts(false)}
         />
+
+        {/* Data Loader */}
         <DataLoader />
       </div>
     </MainLayout>

@@ -69,7 +69,7 @@ export const PRIORITY_LABELS: Record<TaskPriority, string> = {
 
 // Task Status Labels
 export const STATUS_LABELS: Record<TaskStatus, string> = {
-  brainstorm: '💡 Ideas',
+  brainstorm: 'Ideas',
   todo: 'To Do',
   inProgress: 'In Progress',
   done: 'Done',

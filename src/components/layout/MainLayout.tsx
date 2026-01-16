@@ -27,7 +27,7 @@ export function MainLayout({ children, searchInputRef, onShowShortcuts }: MainLa
         {/* Sidebar */}
         <Sidebar />
 
-        {/* Main Content */}
+        {/* Main Content - Single scrollable area */}
         <main className="flex-1 overflow-y-auto p-6">
           {children}
         </main>
