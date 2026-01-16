@@ -4,14 +4,16 @@
 ~~- increase character limit in description~~
 ~~- change column colors done should be green~~
 - do something with project icons
-- keyboard shortcut icon 
+~~- keyboard shortcut icon ~~
 - clear search icon not centered
 -~~ filter should be just the icon~~
 - inbox to show all tasks??
 ~~- tags in task modal almost invisible in dark mode~~
-- esc to exit modals
-- keyboard shootcut and archive icons
+~~- esc to exit modals~~
+~~- keyboard shootcut and archive icons~~
 - click in empty space on kanban column to add task
+- show description of tasks up to 5 lines lines with see more button if the description is longer
+
 
 
 
