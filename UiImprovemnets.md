@@ -14,6 +14,6 @@
 - click in empty space on kanban column to add task
 - show description of tasks up to 5 lines lines with see more button if the description is longer
 remove stats bar
-
+dsdfsf
 
 
