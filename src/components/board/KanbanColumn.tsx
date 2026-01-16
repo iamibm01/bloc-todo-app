@@ -34,7 +34,7 @@ export function KanbanColumn({ status, tasks, children }: KanbanColumnProps) {
     <div className="flex-1 min-w-[300px]">
       {/* Column Header */}
       <div
-        className="p-4 border-2 border-light-text-primary dark:border-dark-text-primary mb-4"
+        className="p-4 border-2 border-light-text-primary dark:border-dark-text-primary mb-4 sticky"
         style={{ backgroundColor: columnColor }}
       >
         <div className="flex items-center justify-between">

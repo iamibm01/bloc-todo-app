@@ -34,7 +34,7 @@ export function ListView({ tasks, onTaskClick, onTaskDelete, onStatusChange }: L
   const colors = theme === 'light' ? PASTEL_COLORS_LIGHT : PASTEL_COLORS_DARK;
   const [sortBy, setSortBy] = useState<SortOption>('priority');
 
-  // Sort tasks based on selected option
+// Sort tasks based on selected option
   const sortedTasks = (() => {
     switch (sortBy) {
       case 'priority':

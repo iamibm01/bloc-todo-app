@@ -8,3 +8,4 @@ export { SearchBar } from './SearchBar';
 export { FilterPanel } from './FilterPanel';
 export { ActiveFilters } from './ActiveFilters';
 export { KeyboardShortcutsModal } from './KeyboardShortcutsModal';
+export { DataLoader } from './DataLoader';

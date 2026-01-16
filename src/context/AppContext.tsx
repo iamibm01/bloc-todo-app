@@ -139,29 +139,26 @@ export function AppProvider({ children }: AppProviderProps) {
   // TASK ACTIONS
   // ==========================================
 
-  const createTask = useCallback(
-    (input: CreateTaskInput): Task => {
-      const now = new Date();
-      const newTask: Task = {
-        id: uuidv4(),
-        title: input.title,
-        description: input.description,
-        projectId: input.projectId,
-        status: 'todo',
-        priority: input.priority || 'medium',
-        tags: input.tags || [],
-        dueDate: input.dueDate,
-        createdAt: now,
-        updatedAt: now,
-        order: tasks.length, // Add to end
-        isArchived: false,
-      };
+const createTask = useCallback((input: CreateTaskInput): Task => {
+    const now = new Date();
+    const newTask: Task = {
+      id: uuidv4(),
+      title: input.title,
+      description: input.description,
+      projectId: input.projectId,
+      status: 'brainstorm', // Changed from 'todo' to 'brainstorm'
+      priority: input.priority || 'medium',
+      tags: input.tags || [],
+      dueDate: input.dueDate,
+      createdAt: now,
+      updatedAt: now,
+      order: tasks.length,
+      isArchived: false,
+    };
 
-      setTasks((prev) => [...prev, newTask]);
-      return newTask;
-    },
-    [tasks.length]
-  );
+    setTasks((prev) => [...prev, newTask]);
+    return newTask;
+  }, [tasks.length]);
 
   const updateTask = useCallback((id: string, input: UpdateTaskInput) => {
     setTasks((prev) =>

@@ -1,11 +1,14 @@
 import { InputHTMLAttributes, forwardRef } from 'react';
-import { motion } from 'framer-motion';
+// import { motion } from 'framer-motion';
 
 // ==========================================
 // SEARCHBAR PROPS
 // ==========================================
 
-interface SearchBarProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {
+interface SearchBarProps extends Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  'type'
+> {
   onClear?: () => void;
 }
 
@@ -41,7 +44,7 @@ export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
           type="text"
           value={value}
           className={`
-            w-full pl-10 pr-10 py-2
+            w-full pl-10 pr-10 py-3
             bg-light-surface dark:bg-dark-surface
             text-light-text-primary dark:text-dark-text-primary
             border-2 border-light-border dark:border-dark-border
@@ -56,15 +59,18 @@ export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
         />
 
         {/* Clear Button */}
+        {/* Clear Button */}
         {value && onClear && (
-          <motion.button
+          <button
             onClick={onClear}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-light-text-secondary dark:text-dark-text-secondary hover:text-light-text-primary dark:hover:text-dark-text-primary transition-colors"
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0, opacity: 0 }}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
+            className="absolute right-3 text-light-text-secondary dark:text-dark-text-secondary hover:text-light-text-primary dark:hover:text-dark-text-primary transition-colors"
+            style={{
+              top: '50%',
+              transform: 'translateY(-50%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -80,7 +86,7 @@ export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
                 d="M6 18L18 6M6 6l12 12"
               />
             </svg>
-          </motion.button>
+          </button>
         )}
       </div>
     );
