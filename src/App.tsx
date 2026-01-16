@@ -62,10 +62,6 @@ function App() {
     return result;
   }, [tasks, activeProjectId, searchQuery, filters]);
 
-  const brainstormTasks = filteredTasks.filter((t) => t.status === 'brainstorm');
-  const todoTasks = filteredTasks.filter((t) => t.status === 'todo');
-  const inProgressTasks = filteredTasks.filter((t) => t.status === 'inProgress');
-  const doneTasks = filteredTasks.filter((t) => t.status === 'done');
 
   // Keyboard shortcuts
   useKeyboardShortcuts(

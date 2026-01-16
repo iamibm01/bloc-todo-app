@@ -30,8 +30,11 @@ export function TopBar({ searchInputRef, onShowShortcuts }: TopBarProps) {
   const allTags = Array.from(new Set(tasks.flatMap((task) => task.tags)));
 
   // Check if any filters are active
-  const hasActiveFilters =
-    filters.priority || (filters.tags && filters.tags.length > 0) || filters.dateRange;
+  const hasActiveFilters = !!(
+    filters.priority ||
+    (filters.tags && filters.tags.length > 0) ||
+    filters.dateRange
+  );
 
   return (
     <header className="sticky top-0 z-50 bg-light-surface dark:bg-dark-surface border-b-3 border-light-text-primary dark:border-dark-text-primary">
