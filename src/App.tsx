@@ -3,7 +3,12 @@ import { MainLayout } from './components/layout';
 import { KanbanBoard, ListView } from './components/board';
 import { ArchiveView } from './components/views';
 import { TaskModal, TaskForm } from './components/tasks';
-import { Button, ActiveFilters, KeyboardShortcutsModal, DataLoader } from './components/common';
+import {
+  Button,
+  ActiveFilters,
+  KeyboardShortcutsModal,
+  DataLoader,
+} from './components/common';
 import { useApp } from './context/AppContext';
 import { CreateTaskInput, UpdateTaskInput, TaskStatus } from './types';
 import { applyFilters, filterBySearch } from './utils/filtering';
@@ -121,7 +126,7 @@ function App() {
         description: 'Toggle archive view',
       },
       {
-        key: '?',
+        key: '`',
         callback: () => setShowShortcuts(true),
         description: 'Show keyboard shortcuts',
       },
@@ -197,7 +202,10 @@ function App() {
   // Render archive view
   if (showArchive) {
     return (
-      <MainLayout searchInputRef={searchInputRef}>
+      <MainLayout
+        searchInputRef={searchInputRef}
+        onShowShortcuts={() => setShowShortcuts(true)}
+      >
         <ArchiveView />
       </MainLayout>
     );
@@ -205,7 +213,10 @@ function App() {
 
   // Render normal project view
   return (
-    <MainLayout searchInputRef={searchInputRef}>
+    <MainLayout
+      searchInputRef={searchInputRef}
+      onShowShortcuts={() => setShowShortcuts(true)}
+    >
       <div className="max-w-7xl mx-auto">
         {/* Project Header */}
         {activeProject && (
@@ -235,14 +246,6 @@ function App() {
                   size="lg"
                 >
                   + New Task
-                </Button>
-                <Button
-                  onClick={() => setShowShortcuts(true)}
-                  variant="ghost"
-                  size="lg"
-                  title="Keyboard shortcuts (Press ?)"
-                >
-                  ⌨️
                 </Button>
               </div>
             </div>
@@ -359,7 +362,6 @@ function App() {
         />
         <DataLoader />
       </div>
-      
     </MainLayout>
   );
 }

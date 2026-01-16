@@ -10,9 +10,10 @@ import { SearchBar, FilterPanel } from '@/components/common';
 
 interface TopBarProps {
   searchInputRef?: RefObject<HTMLInputElement | null>;
+  onShowShortcuts?: () => void;
 }
 
-export function TopBar({ searchInputRef }: TopBarProps) {
+export function TopBar({ searchInputRef, onShowShortcuts }: TopBarProps) {
   const { theme, toggleTheme } = useTheme();
   const {
     searchQuery,
@@ -95,6 +96,32 @@ export function TopBar({ searchInputRef }: TopBarProps) {
               List
             </button>
           </div>
+
+          {/* Keyboard Shortcuts Button */}
+          <motion.button
+            onClick={onShowShortcuts}
+            className="p-2 border-2 border-light-text-primary dark:border-dark-text-primary border-l-0 bg-light-surface dark:bg-dark-surface hover:bg-pastel-purple dark:hover:bg-muted-purple transition-colors"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            aria-label="Keyboard shortcuts"
+            title="Keyboard shortcuts (?)"
+          >
+            {/* Command/Keyboard Icon */}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 text-light-text-primary dark:text-dark-text-primary"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
+            </svg>
+          </motion.button>
 
           {/* Theme Toggle */}
           <motion.button

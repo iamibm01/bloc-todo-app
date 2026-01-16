@@ -61,7 +61,7 @@ export function useKeyboardShortcuts(
   }, [shortcuts, enabled]);
 }
 
-// Helper to get modifier key display (Cmd on Mac, Ctrl on Windows/Linux)
+// Helper to get modifier display (Cmd on Mac, Ctrl on Windows/Linux)
 export const getModifierKey = () => {
   const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
   return isMac ? '⌘' : 'Ctrl';

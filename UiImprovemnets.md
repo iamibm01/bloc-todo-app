@@ -8,7 +8,7 @@
 - clear search icon not centered
 -~~ filter should be just the icon~~
 - inbox to show all tasks??
-- tags in task modal almost invisible in dark mode
+~~- tags in task modal almost invisible in dark mode~~
 - esc to exit modals
 - keyboard shootcut and archive icons
 - click in empty space on kanban column to add task
