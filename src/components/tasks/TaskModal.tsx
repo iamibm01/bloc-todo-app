@@ -41,19 +41,20 @@ export function TaskModal({ isOpen, onClose, title, children }: TaskModalProps) 
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop */}
+          {/* Backdrop - Click to close */}
           <motion.div
-            className="fixed inset-0 bg-black/50 z-40"
+            className="fixed inset-0 bg-black/50 z-40 cursor-pointer"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
+            aria-label="Close modal"
           />
 
           {/* Modal */}
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
             <motion.div
-              className="bg-light-surface dark:bg-dark-surface border-3 border-light-text-primary dark:border-dark-text-primary max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+              className="bg-light-surface dark:bg-dark-surface border-3 border-light-text-primary dark:border-dark-text-primary max-w-2xl w-full max-h-[90vh] overflow-y-auto pointer-events-auto"
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}

@@ -3,7 +3,7 @@ import { MainLayout } from './components/layout';
 import { KanbanBoard, ListView } from './components/board';
 import { ArchiveView } from './components/views';
 import { TaskModal, TaskForm } from './components/tasks';
-import { Button, ActiveFilters, KeyboardShortcutsModal } from './components/common';
+import { ActiveFilters, KeyboardShortcutsModal, DataLoader } from './components/common';
 import { useApp } from './context/AppContext';
 import { CreateTaskInput, UpdateTaskInput, TaskStatus } from './types';
 import { applyFilters, filterBySearch } from './utils/filtering';
@@ -62,9 +62,6 @@ function App() {
     return result;
   }, [tasks, activeProjectId, searchQuery, filters]);
 
-  const todoTasks = filteredTasks.filter((t) => t.status === 'todo');
-  const inProgressTasks = filteredTasks.filter((t) => t.status === 'inProgress');
-  const doneTasks = filteredTasks.filter((t) => t.status === 'done');
 
   // Keyboard shortcuts
   useKeyboardShortcuts(
@@ -115,7 +112,7 @@ function App() {
         description: 'Toggle archive view',
       },
       {
-        key: '?',
+        key: '`',
         callback: () => setShowShortcuts(true),
         description: 'Show keyboard shortcuts',
       },
@@ -185,54 +182,65 @@ function App() {
   // Render archive view
   if (showArchive) {
     return (
-      <MainLayout searchInputRef={searchInputRef}>
+      <MainLayout 
+        searchInputRef={searchInputRef}
+        onShowShortcuts={() => setShowShortcuts(true)}
+      >
         <ArchiveView />
+        <KeyboardShortcutsModal
+          isOpen={showShortcuts}
+          onClose={() => setShowShortcuts(false)}
+        />
+        <DataLoader />
       </MainLayout>
     );
   }
 
   // Render normal project view
   return (
-    <MainLayout searchInputRef={searchInputRef}>
-      <div className="max-w-7xl mx-auto">
-        {/* Project Header */}
+    <MainLayout 
+      searchInputRef={searchInputRef}
+      onShowShortcuts={() => setShowShortcuts(true)}
+    >
+      <div className="max-w-[1800px] mx-auto pt-2">
+        {/* Project Header with Stats and New Task Button */}
         {activeProject && (
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-4">
+          <div className="mb-6">
+            <div className="flex items-start gap-6">
+              {/* Left: Project Info */}
+              <div className="flex items-center gap-4 flex-1 min-w-0">
                 <div
-                  className="w-8 h-8 border-2 border-light-text-primary dark:border-dark-text-primary"
+                  className="w-10 h-10 border-2 border-light-text-primary dark:border-dark-text-primary flex-shrink-0"
                   style={{ backgroundColor: activeProject.color }}
                 />
-                <div>
-                  <h1 className="text-4xl font-display font-bold text-light-text-primary dark:text-dark-text-primary">
+                <div className="min-w-0">
+                  <h1 className="text-3xl font-display font-bold text-light-text-primary dark:text-dark-text-primary truncate">
                     {activeProject.name}
                   </h1>
                   {activeProject.description && (
-                    <p className="text-light-text-secondary dark:text-dark-text-secondary">
+                    <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary truncate">
                       {activeProject.description}
                     </p>
                   )}
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <Button onClick={() => setIsModalOpen(true)} variant="primary" size="lg">
-                  + New Task
-                </Button>
-                <Button
-                  onClick={() => setShowShortcuts(true)}
-                  variant="ghost"
-                  size="lg"
-                  title="Keyboard shortcuts (Press ?)"
+              
+            
+              {/* Right: New Task Button - Same height as stats */}
+              <div className="flex-shrink-0">
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  className="h-full px-6 py-3 bg-pastel-pink dark:bg-muted-pink border-2 border-light-text-primary dark:border-dark-text-primary hover:scale-105 transition-transform font-display font-bold text-light-text-primary dark:text-dark-text-primary whitespace-nowrap"
                 >
-                  ⌨️
-                </Button>
+                  + New Task
+                </button>
               </div>
             </div>
           </div>
         )}
 
+        {/* Active Filters Display */}
         <ActiveFilters
           filters={filters}
           onRemovePriority={handleRemovePriority}
@@ -240,45 +248,7 @@ function App() {
           onRemoveDateRange={handleRemoveDateRange}
         />
 
-        <div className="mb-6 p-4 bg-light-surface dark:bg-dark-surface border-2 border-light-border dark:border-dark-border">
-          <div className="grid grid-cols-4 gap-4">
-            <div>
-              <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary mb-1">
-                {searchQuery || filters.priority || filters.tags?.length || filters.dateRange
-                  ? 'Filtered Tasks'
-                  : 'Total Tasks'}
-              </p>
-              <p className="text-3xl font-display font-bold text-light-text-primary dark:text-dark-text-primary">
-                {filteredTasks.length}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary mb-1">
-                To Do
-              </p>
-              <p className="text-2xl font-display font-bold text-pastel-blue dark:text-muted-blue">
-                {todoTasks.length}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary mb-1">
-                In Progress
-              </p>
-              <p className="text-2xl font-display font-bold text-pastel-orange dark:text-muted-orange">
-                {inProgressTasks.length}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary mb-1">
-                Done
-              </p>
-              <p className="text-2xl font-display font-bold text-pastel-purple dark:text-muted-purple">
-                {doneTasks.length}
-              </p>
-            </div>
-          </div>
-        </div>
-
+        {/* Kanban Board or List View */}
         {viewMode === 'kanban' ? (
           <KanbanBoard
             tasks={filteredTasks}
@@ -296,6 +266,7 @@ function App() {
           />
         )}
 
+        {/* Create Task Modal */}
         <TaskModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
@@ -308,6 +279,7 @@ function App() {
           />
         </TaskModal>
 
+        {/* Edit Task Modal */}
         <TaskModal
           isOpen={!!editingTask}
           onClose={() => setEditingTask(null)}
@@ -324,10 +296,14 @@ function App() {
           )}
         </TaskModal>
 
+        {/* Keyboard Shortcuts Modal */}
         <KeyboardShortcutsModal
           isOpen={showShortcuts}
           onClose={() => setShowShortcuts(false)}
         />
+
+        {/* Data Loader */}
+        <DataLoader />
       </div>
     </MainLayout>
   );
