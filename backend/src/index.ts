@@ -7,6 +7,7 @@ dotenv.config();
 
 // Create Express application
 const app = express();
+
 const PORT = process.env.PORT || 3001;
 
 // Middleware
@@ -14,11 +15,11 @@ app.use(cors()); // Allow frontend to make requests
 app.use(express.json()); // Parse JSON request bodies
 
 // Test route - our first API endpoint!
-app.get('/api/health', (req: Request, res: Response) => {
+app.get('/api/health', (_req: Request, res: Response) => {
   res.json({
     status: 'ok',
-    message: 'Backend server is running!',
-    timestamp: new Date().toISOString()
+    message: 'Backend server is alive',
+    timestamp: new Date().toISOString(),
   });
 });
 
