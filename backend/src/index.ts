@@ -1,7 +1,6 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import todoRoutes from './routes/todoRoutes';
 
 // Load environment variables
 dotenv.config();
@@ -24,7 +23,6 @@ app.get('/api/health', (_req: Request, res: Response) => {
 });
 
 // Mount todo routes
-app.use('/api/todos', todoRoutes);
 
 // 404 handler for undefined routes
 app.use((_req: Request, res: Response) => {

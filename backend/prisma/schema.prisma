@@ -18,21 +18,51 @@ model User {
   name      String?
   createdAt DateTime @default(now())
 
-  // Relation: One user has many todos
-  todos     Todo[]
+  // Relations
+  tasks     Task[]
+  projects  Project[]
 }
 
-// Todo model - represents the 'todos' table in PostgreSQL
-model Todo {
-  id        String   @id @default(uuid())
-  title     String
-  completed Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+// Project model - organizational containers for tasks
+model Project {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  color       String   @default("#FFD5E5")
+  isArchived  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  // Relation: Each todo belongs to one user
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Relations
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tasks       Task[]
 
   @@index([userId])
+}
+
+// Task model - individual todo items with advanced features
+model Task {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  status      String   @default("brainstorm") // brainstorm, todo, inProgress, done
+  priority    String   @default("medium")     // low, medium, high
+  tags        String[] @default([])
+  dueDate     DateTime?
+  completedAt DateTime?
+  order       Int      @default(0)
+  isArchived  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([projectId])
+  @@index([status])
 }
