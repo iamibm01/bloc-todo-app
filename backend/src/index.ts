@@ -1,6 +1,9 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import taskRoutes from './routes/taskRoutes';
+import projectRoutes from './routes/projectRoutes';
+import userRoutes from './routes/userRoutes';
 
 // Load environment variables
 dotenv.config();
@@ -22,7 +25,10 @@ app.get('/api/health', (_req: Request, res: Response) => {
   });
 });
 
-// Mount todo routes
+// API Routes
+app.use('/api/tasks', taskRoutes);
+app.use('/api/projects', projectRoutes);
+app.use('/api/users', userRoutes);
 
 // 404 handler for undefined routes
 app.use((_req: Request, res: Response) => {
@@ -33,5 +39,7 @@ app.use((_req: Request, res: Response) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on http://localhost:${PORT}`);
   console.log(`📡 Health check: http://localhost:${PORT}/api/health`);
-  console.log(`📝 Todos API: http://localhost:${PORT}/api/todos`);
+  console.log(`📝 Tasks API: http://localhost:${PORT}/api/tasks`);
+  console.log(`📁 Projects API: http://localhost:${PORT}/api/projects`);
+  console.log(`👤 Users API: http://localhost:${PORT}/api/users`);
 });
