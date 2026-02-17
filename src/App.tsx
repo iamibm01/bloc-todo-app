@@ -3,7 +3,10 @@ import { MainLayout } from './components/layout';
 import { KanbanBoard, ListView } from './components/board';
 import { ArchiveView } from './components/views';
 import { TaskModal, TaskForm } from './components/tasks';
-import { ActiveFilters, KeyboardShortcutsModal, DataLoader } from './components/common';
+import {
+  ActiveFilters,
+  KeyboardShortcutsModal,
+} from './components/common';
 import { useApp } from './context/AppContext';
 import { CreateTaskInput, UpdateTaskInput, TaskStatus } from './types';
 import { applyFilters, filterBySearch } from './utils/filtering';
@@ -33,6 +36,8 @@ function App() {
   const [showArchive, setShowArchive] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
+  // Show loading spinner while initial data loads
+
   // Listen for archive navigation events from sidebar
   useEffect(() => {
     const handleArchiveNav = () => setShowArchive(true);
@@ -51,7 +56,9 @@ function App() {
 
   // Filter and search tasks
   const filteredTasks = useMemo(() => {
-    let result = tasks.filter((t) => t.projectId === activeProjectId && !t.isArchived);
+    let result = tasks.filter(
+      (t) => t.projectId === activeProjectId && !t.isArchived
+    );
 
     if (searchQuery) {
       result = filterBySearch(result, searchQuery);
@@ -61,7 +68,6 @@ function App() {
 
     return result;
   }, [tasks, activeProjectId, searchQuery, filters]);
-
 
   // Keyboard shortcuts
   useKeyboardShortcuts(
@@ -118,49 +124,70 @@ function App() {
       },
       {
         key: '1',
-        callback: () => !showArchive && setFilters({ ...filters, priority: 'high' }),
+        callback: () =>
+          !showArchive && setFilters({ ...filters, priority: 'high' }),
         description: 'Filter by High priority',
       },
       {
         key: '2',
-        callback: () => !showArchive && setFilters({ ...filters, priority: 'medium' }),
+        callback: () =>
+          !showArchive && setFilters({ ...filters, priority: 'medium' }),
         description: 'Filter by Medium priority',
       },
       {
         key: '3',
-        callback: () => !showArchive && setFilters({ ...filters, priority: 'low' }),
+        callback: () =>
+          !showArchive && setFilters({ ...filters, priority: 'low' }),
         description: 'Filter by Low priority',
       },
       {
         key: '0',
-        callback: () => !showArchive && setFilters({ ...filters, priority: undefined }),
+        callback: () =>
+          !showArchive && setFilters({ ...filters, priority: undefined }),
         description: 'Clear priority filter',
       },
     ],
     !isModalOpen && !editingTask && !showShortcuts
   );
 
-  const handleCreateTask = (data: CreateTaskInput | UpdateTaskInput) => {
+  const handleCreateTask = async (data: CreateTaskInput | UpdateTaskInput) => {
     if (activeProjectId) {
-      createTask(data as CreateTaskInput);
-      setIsModalOpen(false);
+      try {
+        await createTask(data as CreateTaskInput);
+        setIsModalOpen(false);
+      } catch (err) {
+        // Error is already handled in context
+        console.error('Failed to create task:', err);
+      }
     }
   };
 
-  const handleUpdateTask = (data: CreateTaskInput | UpdateTaskInput) => {
+  const handleUpdateTask = async (data: CreateTaskInput | UpdateTaskInput) => {
     if (editingTask) {
-      updateTask(editingTask, data as UpdateTaskInput);
-      setEditingTask(null);
+      try {
+        await updateTask(editingTask, data as UpdateTaskInput);
+        setEditingTask(null);
+      } catch (err) {
+        console.error('Failed to update task:', err);
+      }
     }
   };
 
-  const handleTaskMove = (taskId: string, newStatus: TaskStatus) => {
-    updateTask(taskId, { status: newStatus });
+  const handleTaskMove = async (taskId: string, newStatus: TaskStatus) => {
+    try {
+      await updateTask(taskId, { status: newStatus });
+    } catch (err) {
+      console.error('Failed to move task:', err);
+    }
   };
 
-  const handleDeleteTask = (taskId: string) => {
+  const handleDeleteTask = async (taskId: string) => {
     if (confirm('Are you sure you want to delete this task?')) {
-      deleteTask(taskId);
+      try {
+        await deleteTask(taskId);
+      } catch (err) {
+        console.error('Failed to delete task:', err);
+      }
     }
   };
 
@@ -177,12 +204,14 @@ function App() {
     setFilters({ ...filters, dateRange: undefined });
   };
 
-  const taskToEdit = editingTask ? tasks.find((t) => t.id === editingTask) : undefined;
+  const taskToEdit = editingTask
+    ? tasks.find((t) => t.id === editingTask)
+    : undefined;
 
   // Render archive view
   if (showArchive) {
     return (
-      <MainLayout 
+      <MainLayout
         searchInputRef={searchInputRef}
         onShowShortcuts={() => setShowShortcuts(true)}
       >
@@ -191,14 +220,13 @@ function App() {
           isOpen={showShortcuts}
           onClose={() => setShowShortcuts(false)}
         />
-        <DataLoader />
       </MainLayout>
     );
   }
 
   // Render normal project view
   return (
-    <MainLayout 
+    <MainLayout
       searchInputRef={searchInputRef}
       onShowShortcuts={() => setShowShortcuts(true)}
     >
@@ -225,8 +253,6 @@ function App() {
                 </div>
               </div>
 
-              
-            
               {/* Right: New Task Button - Same height as stats */}
               <div className="flex-shrink-0">
                 <button
@@ -303,7 +329,6 @@ function App() {
         />
 
         {/* Data Loader */}
-        <DataLoader />
       </div>
     </MainLayout>
   );

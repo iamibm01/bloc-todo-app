@@ -6,7 +6,6 @@ import {
   ReactNode,
   useCallback,
 } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 import type {
   Task,
   Project,
@@ -18,14 +17,10 @@ import type {
   Filters,
 } from '@/types';
 import {
-  getTasks,
-  saveTasks,
-  getProjects,
-  saveProjects,
   getSettings,
   saveSettings,
-  initializeStorage,
 } from '@/utils/storage';
+import { taskApi, projectApi, initializeTempUser } from '@/services/api';
 import { DEFAULT_PROJECT, PROJECT_COLORS } from '@/constants';
 
 // ==========================================
@@ -40,19 +35,21 @@ interface AppContextType {
   viewMode: ViewMode;
   searchQuery: string;
   filters: Filters;
+  isLoading: boolean;
+  error: string | null;
 
   // Task Actions
-  createTask: (input: CreateTaskInput) => Task;
-  updateTask: (id: string, input: UpdateTaskInput) => void;
-  deleteTask: (id: string) => void;
-  archiveTask: (id: string) => void;
-  unarchiveTask: (id: string) => void;
-  reorderTasks: (tasks: Task[]) => void;
+  createTask: (input: CreateTaskInput) => Promise<Task>;
+  updateTask: (id: string, input: UpdateTaskInput) => Promise<void>;
+  deleteTask: (id: string) => Promise<void>;
+  archiveTask: (id: string) => Promise<void>;
+  unarchiveTask: (id: string) => Promise<void>;
+  reorderTasks: (tasks: Task[]) => Promise<void>;
 
   // Project Actions
-  createProject: (input: CreateProjectInput) => Project;
-  updateProject: (id: string, input: UpdateProjectInput) => void;
-  deleteProject: (id: string) => void;
+  createProject: (input: CreateProjectInput) => Promise<Project>;
+  updateProject: (id: string, input: UpdateProjectInput) => Promise<void>;
+  deleteProject: (id: string) => Promise<void>;
   setActiveProject: (id: string | null) => void;
 
   // View Actions
@@ -81,33 +78,15 @@ interface AppProviderProps {
 }
 
 export function AppProvider({ children }: AppProviderProps) {
-  // Initialize storage
-  useEffect(() => {
-    initializeStorage();
-  }, []);
-
-  // Load initial state
-  const [tasks, setTasks] = useState<Task[]>(() => getTasks());
-  const [projects, setProjects] = useState<Project[]>(() => {
-    const savedProjects = getProjects();
-
-    // If no projects exist, create default inbox
-    if (savedProjects.length === 0) {
-      const defaultProject: Project = {
-        ...DEFAULT_PROJECT,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-      saveProjects([defaultProject]);
-      return [defaultProject];
-    }
-
-    return savedProjects;
-  });
+  // State
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const [activeProjectId, setActiveProjectId] = useState<string | null>(() => {
     const settings = getSettings();
-    return settings.activeProjectId || projects[0]?.id || null;
+    return settings.activeProjectId || null;
   });
 
   const [viewMode, setViewModeState] = useState<ViewMode>(() => {
@@ -119,16 +98,59 @@ export function AppProvider({ children }: AppProviderProps) {
   const [filters, setFilters] = useState<Filters>({});
 
   // ==========================================
-  // PERSIST TO LOCALSTORAGE
+  // INITIALIZE DATA FROM API
   // ==========================================
 
   useEffect(() => {
-    saveTasks(tasks);
-  }, [tasks]);
+    async function initializeData() {
+      try {
+        setIsLoading(true);
+        setError(null);
 
-  useEffect(() => {
-    saveProjects(projects);
-  }, [projects]);
+        // Ensure we have a temp user
+        await initializeTempUser();
+
+        // Fetch projects and tasks in parallel
+        const [fetchedProjects, fetchedTasks] = await Promise.all([
+          projectApi.getAll(),
+          taskApi.getAll(),
+        ]);
+
+        // If no projects exist, create default inbox
+        if (fetchedProjects.length === 0) {
+          const defaultProject: Project = {
+            ...DEFAULT_PROJECT,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          };
+          const createdProject = await projectApi.create({
+            name: defaultProject.name,
+            description: defaultProject.description,
+            color: defaultProject.color,
+          });
+          setProjects([createdProject]);
+          setActiveProjectId(createdProject.id);
+        } else {
+          setProjects(fetchedProjects);
+          // Only set activeProjectId if it's null
+          setActiveProjectId(prev => prev || fetchedProjects[0]?.id || null);
+        }
+
+        setTasks(fetchedTasks);
+      } catch (err) {
+        console.error('Failed to initialize data:', err);
+        setError('Failed to load data. Please refresh the page.');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    initializeData();
+  }, []); // Empty dependency array - only run once
+
+  // ==========================================
+  // PERSIST SETTINGS TO LOCALSTORAGE
+  // ==========================================
 
   useEffect(() => {
     const settings = getSettings();
@@ -139,147 +161,212 @@ export function AppProvider({ children }: AppProviderProps) {
   // TASK ACTIONS
   // ==========================================
 
-const createTask = useCallback((input: CreateTaskInput): Task => {
-    const now = new Date();
-    const newTask: Task = {
-      id: uuidv4(),
-      title: input.title,
-      description: input.description,
-      projectId: input.projectId,
-      status: 'brainstorm', // Changed from 'todo' to 'brainstorm'
-      priority: input.priority || 'medium',
-      tags: input.tags || [],
-      dueDate: input.dueDate,
-      createdAt: now,
-      updatedAt: now,
-      order: tasks.length,
-      isArchived: false,
-    };
+  const createTask = useCallback(
+    async (input: CreateTaskInput): Promise<Task> => {
+      try {
+        // Make API call first
+        const createdTask = await taskApi.create(input);
 
-    setTasks((prev) => [...prev, newTask]);
-    return newTask;
-  }, [tasks.length]);
+        // Update state with server response
+        setTasks((prev) => [...prev, createdTask]);
 
-  const updateTask = useCallback((id: string, input: UpdateTaskInput) => {
-    setTasks((prev) =>
-      prev.map((task) => {
-        if (task.id !== id) return task;
+        return createdTask;
+      } catch (err) {
+        console.error('Failed to create task:', err);
+        setError('Failed to create task');
+        throw err;
+      }
+    },
+    []
+  );
 
-        const updated: Task = {
-          ...task,
-          ...input,
-          updatedAt: new Date(),
-        };
+  const updateTask = useCallback(
+    async (id: string, input: UpdateTaskInput): Promise<void> => {
+      try {
+        // Optimistic update
+        setTasks((prev) =>
+          prev.map((task) => {
+            if (task.id !== id) return task;
 
-        // Set completedAt when marking as done
-        if (input.status === 'done' && task.status !== 'done') {
-          updated.completedAt = new Date();
-        }
+            const updated: Task = {
+              ...task,
+              ...input,
+              updatedAt: new Date(),
+            };
 
-        // Clear completedAt when unmarking done
-        if (input.status !== 'done' && task.status === 'done') {
-          updated.completedAt = undefined;
-        }
+            // Set completedAt when marking as done
+            if (input.status === 'done' && task.status !== 'done') {
+              updated.completedAt = new Date();
+            }
 
-        return updated;
-      })
-    );
+            // Clear completedAt when unmarking done
+            if (input.status !== 'done' && task.status === 'done') {
+              updated.completedAt = undefined;
+            }
+
+            return updated;
+          })
+        );
+
+        // Make API call
+        const updatedTask = await taskApi.update(id, input);
+
+        // Update with server response
+        setTasks((prev) =>
+          prev.map((task) => (task.id === id ? updatedTask : task))
+        );
+      } catch (err) {
+        console.error('Failed to update task:', err);
+        setError('Failed to update task');
+        throw err;
+      }
+    },
+    []
+  );
+
+  const deleteTask = useCallback(async (id: string): Promise<void> => {
+    try {
+      // Optimistic update
+      setTasks((prev) => prev.filter((task) => task.id !== id));
+
+      // Make API call
+      await taskApi.delete(id);
+    } catch (err) {
+      console.error('Failed to delete task:', err);
+      setError('Failed to delete task');
+      throw err;
+    }
   }, []);
 
-  const deleteTask = useCallback((id: string) => {
-    setTasks((prev) => prev.filter((task) => task.id !== id));
-  }, []);
+  const archiveTask = useCallback(
+    async (id: string): Promise<void> => {
+      await updateTask(id, { isArchived: true });
+    },
+    [updateTask]
+  );
 
-  const archiveTask = useCallback((id: string) => {
-    setTasks((prev) =>
-      prev.map((task) =>
-        task.id === id
-          ? { ...task, isArchived: true, updatedAt: new Date() }
-          : task
-      )
-    );
-  }, []);
+  const unarchiveTask = useCallback(
+    async (id: string): Promise<void> => {
+      await updateTask(id, { isArchived: false });
+    },
+    [updateTask]
+  );
 
-  const unarchiveTask = useCallback((id: string) => {
-    setTasks((prev) =>
-      prev.map((task) =>
-        task.id === id
-          ? { ...task, isArchived: false, updatedAt: new Date() }
-          : task
-      )
-    );
-  }, []);
+  const reorderTasks = useCallback(async (reorderedTasks: Task[]): Promise<void> => {
+    try {
+      // Optimistic update
+      const updatedTasks = reorderedTasks.map((task, index) => ({
+        ...task,
+        order: index,
+        updatedAt: new Date(),
+      }));
+      setTasks(updatedTasks);
 
-  const reorderTasks = useCallback((reorderedTasks: Task[]) => {
-    // Update order property for each task
-    const updatedTasks = reorderedTasks.map((task, index) => ({
-      ...task,
-      order: index,
-      updatedAt: new Date(),
-    }));
-    setTasks(updatedTasks);
+      // Make API call
+      await taskApi.reorder(
+        updatedTasks.map((task) => ({ id: task.id, order: task.order }))
+      );
+    } catch (err) {
+      console.error('Failed to reorder tasks:', err);
+      setError('Failed to reorder tasks');
+      throw err;
+    }
   }, []);
 
   // ==========================================
   // PROJECT ACTIONS
   // ==========================================
 
-  const createProject = useCallback((input: CreateProjectInput): Project => {
-    const now = new Date();
+  const createProject = useCallback(
+    async (input: CreateProjectInput): Promise<Project> => {
+      try {
+        const projectColor =
+          input.color ??
+          PROJECT_COLORS[Math.floor(Math.random() * PROJECT_COLORS.length)] ??
+          '#FFD5E5';
 
-    // Get color from input or random from palette
-    const projectColor =
-      input.color ??
-      PROJECT_COLORS[Math.floor(Math.random() * PROJECT_COLORS.length)] ??
-      '#FFD5E5';
+        // Make API call
+        const createdProject = await projectApi.create({
+          ...input,
+          color: projectColor,
+        });
 
-    const newProject: Project = {
-      id: uuidv4(),
-      name: input.name,
-      description: input.description,
-      color: projectColor,
-      createdAt: now,
-      updatedAt: now,
-      isArchived: false,
-    };
+        // Update state
+        setProjects((prev) => [...prev, createdProject]);
 
-    setProjects((prev) => [...prev, newProject]);
-    return newProject;
-  }, []);
+        return createdProject;
+      } catch (err) {
+        console.error('Failed to create project:', err);
+        setError('Failed to create project');
+        throw err;
+      }
+    },
+    []
+  );
 
-  const updateProject = useCallback((id: string, input: UpdateProjectInput) => {
-    setProjects((prev) =>
-      prev.map((project) =>
-        project.id === id
-          ? { ...project, ...input, updatedAt: new Date() }
-          : project
-      )
-    );
-  }, []);
+  const updateProject = useCallback(
+    async (id: string, input: UpdateProjectInput): Promise<void> => {
+      try {
+        // Optimistic update
+        setProjects((prev) =>
+          prev.map((project) =>
+            project.id === id
+              ? { ...project, ...input, updatedAt: new Date() }
+              : project
+          )
+        );
+
+        // Make API call
+        const updatedProject = await projectApi.update(id, input);
+
+        // Update with server response
+        setProjects((prev) =>
+          prev.map((project) =>
+            project.id === id ? updatedProject : project
+          )
+        );
+      } catch (err) {
+        console.error('Failed to update project:', err);
+        setError('Failed to update project');
+        throw err;
+      }
+    },
+    []
+  );
 
   const deleteProject = useCallback(
-    (id: string) => {
+    async (id: string): Promise<void> => {
       // Don't allow deleting the default inbox
       if (id === DEFAULT_PROJECT.id) return;
 
-      // Move all tasks from this project to inbox
-      setTasks((prev) =>
-        prev.map((task) =>
-          task.projectId === id
-            ? { ...task, projectId: DEFAULT_PROJECT.id, updatedAt: new Date() }
-            : task
-        )
-      );
+      try {
+        // Move all tasks from this project to inbox (optimistic)
+        setTasks((prev) =>
+          prev.map((task) =>
+            task.projectId === id
+              ? { ...task, projectId: DEFAULT_PROJECT.id, updatedAt: new Date() }
+              : task
+          )
+        );
 
-      // Delete the project
-      setProjects((prev) => prev.filter((project) => project.id !== id));
+        // Delete the project
+        setProjects((prev) => prev.filter((project) => project.id !== id));
 
-      // If this was the active project, switch to inbox
-      if (activeProjectId === id) {
-        setActiveProjectId(DEFAULT_PROJECT.id);
+        // If this was the active project, switch to inbox
+        setActiveProjectId((prev) => prev === id ? DEFAULT_PROJECT.id : prev);
+
+        // Make API call
+        await projectApi.delete(id);
+
+        // Note: Server will cascade delete or we handle tasks separately
+        // For now, we've already moved tasks to inbox optimistically
+      } catch (err) {
+        console.error('Failed to delete project:', err);
+        setError('Failed to delete project');
+        throw err;
       }
     },
-    [activeProjectId]
+    []
   );
 
   const setActiveProject = useCallback((id: string | null) => {
@@ -318,6 +405,8 @@ const createTask = useCallback((input: CreateTaskInput): Task => {
     viewMode,
     searchQuery,
     filters,
+    isLoading,
+    error,
 
     // Task Actions
     createTask,
@@ -351,10 +440,6 @@ const createTask = useCallback((input: CreateTaskInput): Task => {
 // CUSTOM HOOK
 // ==========================================
 
-/**
- * Hook to access app context
- * Must be used within AppProvider
- */
 export function useApp() {
   const context = useContext(AppContext);
 

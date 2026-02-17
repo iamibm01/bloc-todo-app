@@ -9,3 +9,5 @@ export { FilterPanel } from './FilterPanel';
 export { ActiveFilters } from './ActiveFilters';
 export { KeyboardShortcutsModal } from './KeyboardShortcutsModal';
 export { DataLoader } from './DataLoader';
+export { LoadingSpinner } from './LoadingSpinner';
+export { ErrorDisplay } from './ErrorDisplay';
