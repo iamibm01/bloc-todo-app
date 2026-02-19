@@ -1,12 +1,25 @@
 import { LoadingSpinner, ErrorDisplay } from './components/common';
 import { useApp } from './context/AppContext';
+import { useAuth } from './context/AuthContext';
+import { AuthPage } from './pages/AuthPage';
 import App from './App';
 
 export function AppWrapper() {
-  const { isLoading, error } = useApp();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isLoading: appLoading, error } = useApp();
 
-  // Handle loading state
-  if (isLoading) {
+  // Show loading spinner while checking authentication
+  if (authLoading) {
+    return <LoadingSpinner />;
+  }
+
+  // If not authenticated, show login/register page
+  if (!isAuthenticated) {
+    return <AuthPage />;
+  }
+
+  // Show loading spinner while fetching app data
+  if (appLoading) {
     return <LoadingSpinner />;
   }
 
@@ -15,6 +28,6 @@ export function AppWrapper() {
     return <ErrorDisplay error={error} onRetry={() => window.location.reload()} />;
   }
 
-  // Render actual app
+  // User is authenticated and data is loaded - show the app!
   return <App />;
 }

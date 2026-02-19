@@ -13,8 +13,25 @@ import type {
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
-// Temporary: We'll replace this with real auth later
-const TEMP_USER_ID = localStorage.getItem('temp_user_id') || '';
+// ==========================================
+// TOKEN MANAGEMENT
+// ==========================================
+
+const TOKEN_KEY = 'auth_token';
+
+export const tokenStorage = {
+  get: (): string | null => {
+    return localStorage.getItem(TOKEN_KEY);
+  },
+
+  set: (token: string): void => {
+    localStorage.setItem(TOKEN_KEY, token);
+  },
+
+  remove: (): void => {
+    localStorage.removeItem(TOKEN_KEY);
+  },
+};
 
 // ==========================================
 // API ERROR HANDLING
@@ -50,153 +67,172 @@ async function handleResponse<T>(response: Response): Promise<T> {
 }
 
 // ==========================================
-// TASK API
+// REQUEST HELPER (Automatically adds auth token)
+// ==========================================
+
+async function apiRequest<T>(
+  url: string,
+  options: RequestInit = {}
+): Promise<T> {
+  const token = tokenStorage.get();
+
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+    ...options.headers,
+  };
+
+  // Add Authorization header if token exists
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${API_BASE_URL}${url}`, {
+    ...options,
+    headers,
+  });
+
+  return handleResponse<T>(response);
+}
+
+// ==========================================
+// AUTH API
+// ==========================================
+
+export interface AuthResponse {
+  message: string;
+  token: string;
+  user: {
+    id: string;
+    email: string;
+    name: string | null;
+    createdAt: Date;
+  };
+}
+
+export interface User {
+  id: string;
+  email: string;
+  name: string | null;
+  createdAt: Date;
+}
+
+export const authApi = {
+  /**
+   * Register a new user
+   */
+  async register(email: string, password: string, name?: string): Promise<AuthResponse> {
+    const response = await apiRequest<AuthResponse>('/api/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ email, password, name }),
+    });
+
+    // Save token to localStorage
+    tokenStorage.set(response.token);
+
+    return response;
+  },
+
+  /**
+   * Login existing user
+   */
+  async login(email: string, password: string): Promise<AuthResponse> {
+    const response = await apiRequest<AuthResponse>('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    });
+
+    // Save token to localStorage
+    tokenStorage.set(response.token);
+
+    return response;
+  },
+
+  /**
+   * Get current authenticated user
+   */
+  async getCurrentUser(): Promise<{ user: User }> {
+    return apiRequest<{ user: User }>('/api/auth/me');
+  },
+
+  /**
+   * Logout (clear token)
+   */
+  logout(): void {
+    tokenStorage.remove();
+  },
+};
+
+// ==========================================
+// TASK API (Updated to use apiRequest)
 // ==========================================
 
 export const taskApi = {
-  /**
-   * Get all tasks for the current user
-   */
   async getAll(): Promise<Task[]> {
-    const response = await fetch(`${API_BASE_URL}/api/tasks?userId=${TEMP_USER_ID}`);
-    return handleResponse<Task[]>(response);
+    return apiRequest<Task[]>('/api/tasks');
   },
 
-  /**
-   * Get a single task by ID
-   */
   async getById(id: string): Promise<Task> {
-    const response = await fetch(`${API_BASE_URL}/api/tasks/${id}`);
-    return handleResponse<Task>(response);
+    return apiRequest<Task>(`/api/tasks/${id}`);
   },
 
-  /**
-   * Create a new task
-   */
   async create(input: CreateTaskInput): Promise<Task> {
-    const response = await fetch(`${API_BASE_URL}/api/tasks`, {
+    return apiRequest<Task>('/api/tasks', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...input, userId: TEMP_USER_ID }),
-    });
-    return handleResponse<Task>(response);
-  },
-
-  /**
-   * Update an existing task
-   */
-  async update(id: string, input: UpdateTaskInput): Promise<Task> {
-    const response = await fetch(`${API_BASE_URL}/api/tasks/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(input),
     });
-    return handleResponse<Task>(response);
   },
 
-  /**
-   * Delete a task
-   */
+  async update(id: string, input: UpdateTaskInput): Promise<Task> {
+    return apiRequest<Task>(`/api/tasks/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(input),
+    });
+  },
+
   async delete(id: string): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/api/tasks/${id}`, {
+    return apiRequest<void>(`/api/tasks/${id}`, {
       method: 'DELETE',
     });
-    return handleResponse<void>(response);
   },
 
-  /**
-   * Reorder tasks (batch update)
-   */
   async reorder(tasks: Array<{ id: string; order: number }>): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/api/tasks/reorder`, {
+    return apiRequest<void>('/api/tasks/reorder', {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ tasks }),
     });
-    return handleResponse<void>(response);
   },
 };
 
 // ==========================================
-// PROJECT API
+// PROJECT API (Updated to use apiRequest)
 // ==========================================
 
 export const projectApi = {
-  /**
-   * Get all projects for the current user
-   */
   async getAll(): Promise<Project[]> {
-    const response = await fetch(`${API_BASE_URL}/api/projects?userId=${TEMP_USER_ID}`);
-    return handleResponse<Project[]>(response);
+    return apiRequest<Project[]>('/api/projects');
   },
 
-  /**
-   * Get a single project by ID
-   */
   async getById(id: string): Promise<Project> {
-    const response = await fetch(`${API_BASE_URL}/api/projects/${id}`);
-    return handleResponse<Project>(response);
+    return apiRequest<Project>(`/api/projects/${id}`);
   },
 
-  /**
-   * Create a new project
-   */
   async create(input: CreateProjectInput): Promise<Project> {
-    const response = await fetch(`${API_BASE_URL}/api/projects`, {
+    return apiRequest<Project>('/api/projects', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...input, userId: TEMP_USER_ID }),
-    });
-    return handleResponse<Project>(response);
-  },
-
-  /**
-   * Update an existing project
-   */
-  async update(id: string, input: UpdateProjectInput): Promise<Project> {
-    const response = await fetch(`${API_BASE_URL}/api/projects/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(input),
     });
-    return handleResponse<Project>(response);
   },
 
-  /**
-   * Delete a project
-   */
+  async update(id: string, input: UpdateProjectInput): Promise<Project> {
+    return apiRequest<Project>(`/api/projects/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(input),
+    });
+  },
+
   async delete(id: string): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/api/projects/${id}`, {
+    return apiRequest<void>(`/api/projects/${id}`, {
       method: 'DELETE',
     });
-    return handleResponse<void>(response);
   },
 };
-
-// ==========================================
-// HELPER: Initialize User
-// ==========================================
-
-/**
- * For now, we'll create a temp user or use existing one
- * Later we'll replace this with proper authentication
- */
-export async function initializeTempUser(): Promise<string> {
-  const existingUserId = localStorage.getItem('temp_user_id');
-  if (existingUserId) return existingUserId;
-
-  // Create a temporary user
-  const response = await fetch(`${API_BASE_URL}/api/users`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      email: `temp-${Date.now()}@example.com`,
-      password: 'temp_password',
-      name: 'Temp User',
-    }),
-  });
-
-  const user = await handleResponse<{ id: string }>(response);
-  localStorage.setItem('temp_user_id', user.id);
-  return user.id;
-}

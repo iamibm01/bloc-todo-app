@@ -20,7 +20,7 @@ import {
   getSettings,
   saveSettings,
 } from '@/utils/storage';
-import { taskApi, projectApi, initializeTempUser } from '@/services/api';
+import { taskApi, projectApi } from '@/services/api';
 import { DEFAULT_PROJECT, PROJECT_COLORS } from '@/constants';
 
 // ==========================================
@@ -108,7 +108,7 @@ export function AppProvider({ children }: AppProviderProps) {
         setError(null);
 
         // Ensure we have a temp user
-        await initializeTempUser();
+    
 
         // Fetch projects and tasks in parallel
         const [fetchedProjects, fetchedTasks] = await Promise.all([

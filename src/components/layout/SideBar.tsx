@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '@/context/AppContext';
+import { useAuth } from '@/context/AuthContext'; // NEW!
 
 // ==========================================
 // SIDEBAR COMPONENT
@@ -9,6 +10,7 @@ import { useApp } from '@/context/AppContext';
 export function Sidebar() {
   const { projects, activeProjectId, setActiveProject, createProject } =
     useApp();
+  const { user, logout } = useAuth(); // NEW!
   const [isExpanded, setIsExpanded] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
@@ -279,6 +281,75 @@ export function Sidebar() {
           )}
         </AnimatePresence>
       </div>
+
+      {/* NEW! User Menu at Bottom */}
+      <AnimatePresence mode="wait">
+        {isExpanded ? (
+          <motion.div
+            key="user-menu-expanded"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.2 }}
+            className="p-4 border-t-2 border-light-text-primary dark:border-dark-text-primary"
+          >
+            <div className="mb-3">
+              <p className="text-xs text-light-text-secondary dark:text-dark-text-secondary mb-1">
+                Signed in as
+              </p>
+              <p className="text-sm font-display font-bold text-light-text-primary dark:text-dark-text-primary truncate">
+                {user?.email}
+              </p>
+              {user?.name && (
+                <p className="text-xs text-light-text-secondary dark:text-dark-text-secondary truncate">
+                  {user.name}
+                </p>
+              )}
+            </div>
+
+            <motion.button
+              onClick={logout}
+              className="w-full py-2 px-4 bg-red-100 dark:bg-red-900/30 border-2 border-red-500 text-red-700 dark:text-red-400 font-display font-bold hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              Sign Out
+            </motion.button>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="user-menu-collapsed"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="p-2 border-t-2 border-light-text-primary dark:border-dark-text-primary"
+          >
+            <motion.button
+              onClick={logout}
+              className="w-full h-10 flex items-center justify-center border-2 border-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+              title="Sign Out"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5 text-red-600 dark:text-red-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                />
+              </svg>
+            </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.aside>
   );
 }

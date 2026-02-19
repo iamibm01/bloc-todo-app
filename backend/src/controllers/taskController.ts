@@ -1,18 +1,22 @@
 import { Request, Response } from 'express';
 import prisma from '../config/database';
 
-// Get all tasks for a user
-export const getAllTasks = async (req: Request, res: Response): Promise<void> => {
+// Get all tasks for authenticated user
+export const getAllTasks = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
-    const { userId } = req.query;
+    // Get userId from authenticated request (set by middleware)
+    const userId = req.userId;
 
-    if (!userId || Array.isArray(userId)) {
-      res.status(400).json({ error: 'Valid userId is required' });
+    if (!userId) {
+      res.status(401).json({ error: 'Not authenticated' });
       return;
     }
 
     const tasks = await prisma.task.findMany({
-      where: { userId },
+      where: { userId }, // Only get tasks for this user
       orderBy: { order: 'asc' },
       include: {
         project: {
@@ -33,7 +37,10 @@ export const getAllTasks = async (req: Request, res: Response): Promise<void> =>
 };
 
 // Get a single task by ID
-export const getTaskById = async (req: Request, res: Response): Promise<void> => {
+export const getTaskById = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const { id } = req.params;
 
@@ -67,14 +74,15 @@ export const getTaskById = async (req: Request, res: Response): Promise<void> =>
   }
 };
 
-// Create a new task
-export const createTask = async (req: Request, res: Response): Promise<void> => {
+export const createTask = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const {
       title,
       description,
       projectId,
-      userId,
       status = 'brainstorm',
       priority = 'medium',
       tags = [],
@@ -82,27 +90,28 @@ export const createTask = async (req: Request, res: Response): Promise<void> => 
       order = 0,
     } = req.body;
 
+    // Get userId from authenticated request
+    const userId = req.userId;
+
+    if (!userId) {
+      res.status(401).json({ error: 'Not authenticated' });
+      return;
+    }
+
     // Validation
-    if (!title || !userId || !projectId) {
+    if (!title || !projectId) {
       res.status(400).json({
-        error: 'Title, userId, and projectId are required'
+        error: 'Title and projectId are required',
       });
       return;
     }
 
-    // Check if user exists
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-    });
-
-    if (!user) {
-      res.status(404).json({ error: 'User not found' });
-      return;
-    }
-
-    // Check if project exists
-    const project = await prisma.project.findUnique({
-      where: { id: projectId },
+    // Check if project exists and belongs to user
+    const project = await prisma.project.findFirst({
+      where: {
+        id: projectId,
+        userId: userId, // Ensure project belongs to this user
+      },
     });
 
     if (!project) {
@@ -115,7 +124,7 @@ export const createTask = async (req: Request, res: Response): Promise<void> => 
         title,
         description,
         projectId,
-        userId,
+        userId, // Use authenticated user's ID
         status,
         priority,
         tags,
@@ -141,7 +150,10 @@ export const createTask = async (req: Request, res: Response): Promise<void> => 
 };
 
 // Update a task
-export const updateTask = async (req: Request, res: Response): Promise<void> => {
+export const updateTask = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const { id } = req.params;
     const updateData = req.body;
@@ -195,7 +207,10 @@ export const updateTask = async (req: Request, res: Response): Promise<void> => 
 };
 
 // Delete a task
-export const deleteTask = async (req: Request, res: Response): Promise<void> => {
+export const deleteTask = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const { id } = req.params;
 
@@ -225,7 +240,10 @@ export const deleteTask = async (req: Request, res: Response): Promise<void> => 
 };
 
 // Reorder tasks (batch update)
-export const reorderTasks = async (req: Request, res: Response): Promise<void> => {
+export const reorderTasks = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const { tasks } = req.body;
 

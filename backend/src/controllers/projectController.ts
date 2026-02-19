@@ -1,18 +1,19 @@
 import { Request, Response } from 'express';
 import prisma from '../config/database';
 
-// Get all projects for a user
+// Get all projects for authenticated user
 export const getAllProjects = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { userId } = req.query;
+    // Get userId from authenticated request (set by middleware)
+    const userId = req.userId;
 
-    if (!userId || Array.isArray(userId)) {
-      res.status(400).json({ error: 'Valid userId is required' });
+    if (!userId) {
+      res.status(401).json({ error: 'Not authenticated' });
       return;
     }
 
     const projects = await prisma.project.findMany({
-      where: { userId },
+      where: { userId },  // Only get projects for this user
       orderBy: { createdAt: 'asc' },
       include: {
         _count: {
@@ -32,14 +33,24 @@ export const getAllProjects = async (req: Request, res: Response): Promise<void>
 export const getProjectById = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
+    const userId = req.userId;
+
+    if (!userId) {
+      res.status(401).json({ error: 'Not authenticated' });
+      return;
+    }
 
     if (!id || Array.isArray(id)) {
       res.status(400).json({ error: 'Invalid project ID' });
       return;
     }
 
-    const project = await prisma.project.findUnique({
-      where: { id },
+    // Find project that belongs to this user
+    const project = await prisma.project.findFirst({
+      where: {
+        id,
+        userId,  // Ensure project belongs to this user
+      },
       include: {
         tasks: {
           orderBy: { order: 'asc' },
@@ -69,23 +80,20 @@ export const createProject = async (req: Request, res: Response): Promise<void> 
       name,
       description,
       color = '#FFD5E5',
-      userId,
     } = req.body;
 
-    if (!name || !userId) {
-      res.status(400).json({
-        error: 'Name and userId are required'
-      });
+    // Get userId from authenticated request
+    const userId = req.userId;
+
+    if (!userId) {
+      res.status(401).json({ error: 'Not authenticated' });
       return;
     }
 
-    // Check if user exists
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-    });
-
-    if (!user) {
-      res.status(404).json({ error: 'User not found' });
+    if (!name) {
+      res.status(400).json({
+        error: 'Name is required'
+      });
       return;
     }
 
@@ -94,7 +102,7 @@ export const createProject = async (req: Request, res: Response): Promise<void> 
         name,
         description,
         color,
-        userId,
+        userId,  // Use authenticated user's ID
       },
     });
 
@@ -110,14 +118,24 @@ export const updateProject = async (req: Request, res: Response): Promise<void> 
   try {
     const { id } = req.params;
     const updateData = req.body;
+    const userId = req.userId;
+
+    if (!userId) {
+      res.status(401).json({ error: 'Not authenticated' });
+      return;
+    }
 
     if (!id || Array.isArray(id)) {
       res.status(400).json({ error: 'Invalid project ID' });
       return;
     }
 
-    const existingProject = await prisma.project.findUnique({
-      where: { id },
+    // Check if project exists and belongs to user
+    const existingProject = await prisma.project.findFirst({
+      where: {
+        id,
+        userId,  // Ensure project belongs to this user
+      },
     });
 
     if (!existingProject) {
@@ -141,14 +159,24 @@ export const updateProject = async (req: Request, res: Response): Promise<void> 
 export const deleteProject = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
+    const userId = req.userId;
+
+    if (!userId) {
+      res.status(401).json({ error: 'Not authenticated' });
+      return;
+    }
 
     if (!id || Array.isArray(id)) {
       res.status(400).json({ error: 'Invalid project ID' });
       return;
     }
 
-    const existingProject = await prisma.project.findUnique({
-      where: { id },
+    // Check if project exists and belongs to user
+    const existingProject = await prisma.project.findFirst({
+      where: {
+        id,
+        userId,  // Ensure project belongs to this user
+      },
     });
 
     if (!existingProject) {

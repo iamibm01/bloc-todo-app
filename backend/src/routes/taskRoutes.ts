@@ -7,11 +7,15 @@ import {
   deleteTask,
   reorderTasks,
 } from '../controllers/taskController';
+import { authenticateToken } from '../middleware/auth';  // NEW!
 
 const router = express.Router();
 
+// Apply authentication to ALL task routes
+router.use(authenticateToken);  // NEW! Protects all routes below
+
 // IMPORTANT: Specific routes MUST come before parameterized routes!
-router.put('/reorder', reorderTasks);   // ✅ Must be BEFORE /:id
+router.put('/reorder', reorderTasks);
 
 // General CRUD routes
 router.get('/', getAllTasks);

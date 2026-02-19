@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import authRoutes from './routes/authRoutes';  // NEW!
 import taskRoutes from './routes/taskRoutes';
 import projectRoutes from './routes/projectRoutes';
 import userRoutes from './routes/userRoutes';
@@ -26,6 +27,7 @@ app.get('/api/health', (_req: Request, res: Response) => {
 });
 
 // API Routes
+app.use('/api/auth', authRoutes);        // NEW! Auth routes
 app.use('/api/tasks', taskRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/users', userRoutes);
@@ -39,6 +41,7 @@ app.use((_req: Request, res: Response) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on http://localhost:${PORT}`);
   console.log(`📡 Health check: http://localhost:${PORT}/api/health`);
+  console.log(`🔐 Auth API: http://localhost:${PORT}/api/auth`);
   console.log(`📝 Tasks API: http://localhost:${PORT}/api/tasks`);
   console.log(`📁 Projects API: http://localhost:${PORT}/api/projects`);
   console.log(`👤 Users API: http://localhost:${PORT}/api/users`);
